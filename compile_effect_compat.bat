@@ -10,7 +10,7 @@ java -jar ../../_closure/compiler.jar ^
 --warning_level VERBOSE ^
 --language_in ES6_STRICT ^
 --language_out ES5_STRICT ^
---rewrite_polyfills=false ^
+--js js/raf_polyfill.js ^
 --js js/effect.js ^
---js_output_file js/effect.min.js
+--js_output_file js/effect.compat.min.js
 popd

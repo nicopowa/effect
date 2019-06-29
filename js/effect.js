@@ -3,14 +3,29 @@
 */
 class Effect {
 	
+	/**
+	* @param {HTMLElement} target: who wants to move ?
+	* @param {Object} options: effect options
+	*/
 	constructor(target, options) {
-		if(!options.hasOwnProperty("delay")) options["props"] = Effect.parseProps(target, options["props"]);
-		else options["delay"]++;
-		this.options = {el: target, d: options["delay"], c: 0, t: options["frames"], p: options["props"], e: options["ease"] || "no"};
+		if(!options["delay"]) options["props"] = Effect.parseProps(target, options["props"]); // no delay, parse props
+		this.options = {
+			id: parseInt(target.getAttribute("data-eff"), 10) || ++Effect._id, // element effect reference
+			el: target, // animated element
+			d: options["delay"]++ || -1, // delay frames
+			c: 0, // current frame
+			t: options["frames"], // total frames
+			p: options["props"], // CSS props
+			e: options["ease"] || "no", // easing function
+			o: options["override"] || false // override
+		};
+		target.setAttribute("data-eff", this.options.id);
 	}
 	
 	/**
 	* @export
+	* @method play: start effect
+	* @return {Promise}
 	*/
 	play() {
 		let prom = new Promise(resolve => { this.options.r = resolve; });
@@ -19,14 +34,23 @@ class Effect {
 	}
 	
 	/**
+	* @export
+	* @method stop: stop effect
+	*/
+	stop() {
+		Effect.removeEffect(this.options.id);
+	}
+	
+	/**
 	* @static
 	* @nocollapse
 	*/
 	static init() {
-		this.frameLoop = -1;
-		this.effects = [];
-		this.propRegex = /^([^\d]*)([\d\.]+)([^\d]*)$/;
-		this.transRegex = /^(\w+)/;
+		this._id = 0; // id counter
+		this.frameLoop = -1; // raf loop
+		this.effects = []; // effects queue
+		this.propRegex = /^([a-z\)\(]*)([e\d\.-]+)(.*)$/; // parse css prop
+		//this.transRegex = /^(\w+)/;
 	}
 	
 	/**
@@ -34,9 +58,21 @@ class Effect {
 	* @nocollapse
 	*/
 	static addEffect(effect) {
-		this.effects.push(effect);
-		if(this.frameLoop !== -1) return;
-		this.hookNextFrame();
+		if(effect.o) this.removeEffect(effect.id); // override
+		this.effects.push(effect); // push to queue
+		if(this.frameLoop !== -1) return; // frame loop already running
+		this.frameLoop = window.requestAnimationFrame(stamp => {
+			this.stamp = stamp;
+			this.animationFrame(this.stamp);
+		});
+	}
+	
+	/**
+	* @static
+	* @nocollapse
+	*/
+	static removeEffect(id) {
+		this.effects = this.effects.filter(eff => eff.id !== id); // remove
 	}
 	
 	/**
@@ -44,7 +80,7 @@ class Effect {
 	* @nocollapse
 	*/
 	static hookNextFrame() {
-		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this));
+		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this)); // next frame plz
 	}
 	
 	/**
@@ -52,8 +88,8 @@ class Effect {
 	* @nocollapse
 	*/
 	static cancelNextFrame() {
-		window.cancelAnimationFrame(this.frameLoop);
-		this.frameLoop = -1;
+		window.cancelAnimationFrame(this.frameLoop); // cancel frame loop
+		this.frameLoop = -1; // reset
 	}
 	
 	/**
@@ -61,29 +97,51 @@ class Effect {
 	* @nocollapse
 	*/
 	static animationFrame(stamp) {
-		//if(this.frameLoop === -1) return;
-		this.hookNextFrame();
-		//for(let i = this.effects.length - 1; i >= 0; i--) this.effectTick(this.effects[i], i);
-		this.effects = this.effects.reduce(this.effectTick.bind(this), []); // TODO COMPARE LOOP FOR VS REDUCE
-		if(!this.effects.length) this.cancelNextFrame();
+		this.step = 1 + Math.round((stamp - this.stamp) / 60); // shall we skip frames ?
+		//if(this.step > 1) console.log("skip", this.step - 1);
+		this.stamp = stamp; // keep frame timestamp
+		//console.log("hook");
+		this.hookNextFrame(); // request next frame
+		//console.log("hooked");
+		this.effects = this.effects.reduce(this.effectTick.bind(this), []); // loop effects
+		if(!this.effects.length) this.cancelNextFrame(); // empty queue, stop frame loop
 	}
 	
 	/**
 	* @static
 	* @nocollapse
 	*/
-	static effectTick(res, eff, index) {
-		if(--eff.d > 0) res.push(eff);
+	static effectTick(res, eff) {
+		//console.log("tick");
+		if(--eff.d > 0) res.push(eff); // delayed, wait
 		else {
-			if(eff.d === 0) eff.p = Effect.parseProps(eff.el, eff.p);
-			eff.c++;
-			//for(let prop in eff.p) eff.el.style[prop] = eff.p[prop].stringBefore + Effect[eff.e](eff.c, eff.p[prop].fromValues, eff.p[prop].toValues - eff.p[prop].fromValues, eff.t) + eff.p[prop].stringAfter;
-			Object.keys(eff.p).forEach(prop => {
-				let value = eff.p[prop];
-				eff.el.style[prop] = value.stringBefore + Effect[eff.e](eff.c, value.fromValues, value.toValues - value.fromValues, eff.t) + value.stringAfter;
-			});
-			if(eff.c === eff.t) eff.r();
-			else res.push(eff);
+			if(eff.d === 0) eff.p = Effect.parseProps(eff.el, eff.p); // finished delay, calc props before animation
+			eff.c = Math.min(eff.t, eff.c + this.step); // in case skip frame exceeds total frames
+			
+			/*Object.keys(eff.p).forEach(prop => // loop props
+				eff.el.style[prop] = // calc frame value
+					eff.p[prop].strBefore // prepend CSS
+					+ Effect[eff.e]( // current value, apply easing
+						eff.c, // t
+						eff.p[prop].fromValue, // b
+						eff.p[prop].valueGap, // c
+						eff.t) // d
+					+ eff.p[prop].strAfter // append CSS
+			);*/
+			
+			for(let prop in eff.p) { // gain 24 bytes minify, check perf vs Object.keys
+				eff.el.style[prop] = // calc frame value
+					eff.p[prop].strBefore // prepend CSS
+					+ Effect[eff.e]( // current value, apply easing
+						eff.c, // t
+						eff.p[prop].fromValue, // b
+						eff.p[prop].valueGap, // c
+						eff.t) // d
+					+ eff.p[prop].strAfter // append CSS
+			}
+			
+			if(eff.c < eff.t) res.push(eff); // wait next frame
+			else eff.r(); // done, resolve and don't push
 		}
 		return res;
 	}
@@ -97,7 +155,7 @@ class Effect {
 	* @param t: current time or position / can be frames, steps, seconds, ms, whatever
 	* @param b: beginning value
 	* @param c: change between the beginning & destination value
-	* @param d: is the total time of the tween
+	* @param d: total time of the tween
 	*/
 	static no(t, b, c, d) {
 		return c * t / d + b;
@@ -132,27 +190,27 @@ class Effect {
 	}
 	
 	/**
-	* @export
 	* @static
 	* @nocollapse
-	*/
-	static bounceOut(t, b, c, d) {
-		if ((t/=d) < (1/2.75)) return c*(7.5625*t*t) + b;
-		else if (t < (2/2.75)) return c*(7.5625*(t-=(1.5/2.75))*t + .75) + b;
-		else if (t < (2.5/2.75)) return c*(7.5625*(t-=(2.25/2.75))*t + .9375) + b;
-		else return c*(7.5625*(t-=(2.625/2.75))*t + .984375) + b;
-	}
-	
-	/**
-	* @static
-	* @nocollapse
+	* @method parseProps: parse HTML element css properties
+	* @param {HTMLElement} target: element
+	* @param {Object} props: CSS properties
 	*/
 	static parseProps(target, props) {
 		for(let prop in props) {
-			let value = target.style[prop] || /*prop === "transform" ? target.style[prop] : */window.getComputedStyle(target).getPropertyValue(prop);
-			let from = Effect.propRegex.exec(value);
-			let to = Effect.propRegex.exec(props[prop])
-			props[prop] = {fromValues: parseFloat(from[2]), toValues: parseFloat(to[2]), stringBefore: to[1] || from[1], stringAfter: to[3] || from[3]};
+			let from = Effect.propRegex.exec(target.style[prop] || window.getComputedStyle(target).getPropertyValue(prop)), 
+			to = Effect.propRegex.exec(props[prop]),
+			fromValue = parseFloat(from[2]),
+			toValue = parseFloat(to[2]), 
+			valueGap = toValue - fromValue;
+			props[prop] = {
+				fromValue: fromValue, 
+				//toValue: toValue, // not needed for tween and ease
+				valueGap: valueGap, // only need gap
+				strBefore: to[1] || from[1], 
+				strAfter: to[3] || from[3]
+			};
+			//console.log("from", props[prop].fromValue, "to", props[prop].toValue);
 		}
 		return props;
 	}
@@ -167,4 +225,5 @@ class Effect {
 		return [transform[0] + "(", transforms[transform[0]], ")"];
 	}*/
 }
+
 Effect.init();

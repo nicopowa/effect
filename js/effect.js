@@ -4,13 +4,13 @@
 class Effect {
 	
 	/**
-	* @param {HTMLElement} target: who wants to move ?
+	* @param {Element} target: who wants to move ?
 	* @param {Object} options: effect options
 	*/
 	constructor(target, options) {
 		if(!options["delay"]) options["props"] = Effect.parseProps(target, options["props"]); // no delay, parse props
 		this.options = {
-			id: parseInt(target.getAttribute("data-eff"), 10) || ++Effect._id, // element effect reference
+			effid: parseInt(target.getAttribute("data-eff"), 10) || ++Effect._id, // element effect reference
 			el: target, // animated element
 			d: options["delay"]++ || -1, // delay frames
 			c: 0, // current frame
@@ -19,7 +19,7 @@ class Effect {
 			e: options["ease"] || "no", // easing function
 			o: options["override"] || false // override
 		};
-		target.setAttribute("data-eff", this.options.id);
+		target.setAttribute("data-eff", this.options.effid);
 	}
 	
 	/**
@@ -28,7 +28,7 @@ class Effect {
 	* @return {Promise}
 	*/
 	play() {
-		let prom = new Promise(resolve => { this.options.r = resolve; });
+		let prom = new Promise(resolve => { this.options.r = resolve; }); // lol closure remove braces more size
 		Effect.addEffect(this.options);
 		return prom;
 	}
@@ -38,7 +38,7 @@ class Effect {
 	* @method stop: stop effect
 	*/
 	stop() {
-		Effect.removeEffect(this.options.id);
+		Effect.removeEffect(this.options.effid);
 	}
 	
 	/**
@@ -58,7 +58,7 @@ class Effect {
 	* @nocollapse
 	*/
 	static addEffect(effect) {
-		if(effect.o) this.removeEffect(effect.id); // override
+		if(effect.o) this.removeEffect(effect.effid); // override
 		this.effects.push(effect); // push to queue
 		if(this.frameLoop !== -1) return; // frame loop already running
 		this.frameLoop = window.requestAnimationFrame(stamp => {
@@ -72,7 +72,7 @@ class Effect {
 	* @nocollapse
 	*/
 	static removeEffect(id) {
-		this.effects = this.effects.filter(eff => eff.id !== id); // remove
+		this.effects = this.effects.filter(eff => eff.effid !== id); // remove
 	}
 	
 	/**
@@ -100,9 +100,7 @@ class Effect {
 		this.step = 1 + Math.round((stamp - this.stamp) / 60); // shall we skip frames ?
 		//if(this.step > 1) console.log("skip", this.step - 1);
 		this.stamp = stamp; // keep frame timestamp
-		//console.log("hook");
 		this.hookNextFrame(); // request next frame
-		//console.log("hooked");
 		this.effects = this.effects.reduce(this.effectTick.bind(this), []); // loop effects
 		if(!this.effects.length) this.cancelNextFrame(); // empty queue, stop frame loop
 	}
@@ -129,7 +127,7 @@ class Effect {
 					+ eff.p[prop].strAfter // append CSS
 			);*/
 			
-			for(let prop in eff.p) { // gain 24 bytes minify, check perf vs Object.keys
+			for(let prop in eff.p) { // gain 24 bytes minify, TODO check perf vs Object.keys
 				eff.el.style[prop] = // calc frame value
 					eff.p[prop].strBefore // prepend CSS
 					+ Effect[eff.e]( // current value, apply easing
@@ -193,7 +191,7 @@ class Effect {
 	* @static
 	* @nocollapse
 	* @method parseProps: parse HTML element css properties
-	* @param {HTMLElement} target: element
+	* @param {Element} target: element
 	* @param {Object} props: CSS properties
 	*/
 	static parseProps(target, props) {

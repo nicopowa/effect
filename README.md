@@ -23,11 +23,13 @@ https://nicopowa.github.io/effect/
 # How it works
 
 - play all effects from a single frame loop
+- parse css properties
 - loop effects array and properties on each frame
 - skip frames to preserve time accuracy
 - keep track of effects to override or stop (data-eff HTML attribute)
 
 **Animated CSS properties must be initialized on HTML elements before playing effects.**
+**TODO : animate props with two or more values**
 
 
 # How to make it work

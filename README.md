@@ -3,12 +3,13 @@
 # Effect
 
 Tiny animation engine
+
 https://nicopr.fr/effect
 
 # Features
 
  - 2k minified JS
- - 2.3k GZIP (ノಠ益ಠ)ノ彡┻━┻
+ - 2.3k GZIP (ノಠ益ಠ)ノ彡┻━━┻
  - no CSS
  - easing, delay, override
  - async/await animations > easy timeline

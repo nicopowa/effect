@@ -36,6 +36,8 @@ async function simpleTween() {
 	let dur = 60; // frames
 	let maxLeft = Math.min(window.innerWidth - 100 - 10, 500);
 	
+	console.time("simple");
+	
 	TweenMax.to(sq1, dur * toSec, {left: maxLeft, ease: Quart.inOut});
 	TweenMax.to(sq2, dur * toSec, {left: maxLeft, opacity: 0, [transform]: "scale(0.5)", ease: Quart.inOut});
 	TweenMax.to(sq3, dur * toSec, {left: maxLeft, filter: "blur(10px)", [transform]: "rotate(360deg)", ease: Quart.inOut});
@@ -54,7 +56,7 @@ async function simpleTween() {
 	await asyncTween(sq2, dur * toSec, {left: 10, opacity: 1, [transform]: "scale(1)", ease: Quart.inOut});
 	await asyncTween(sq3, dur * toSec, {left: 10, filter: "blur(0px)", [transform]: "rotate(0deg)", ease: Quart.inOut});
 	
-	console.timeEnd("tween");
+	console.timeEnd("simple");
 	
 	TweenMax.to(sq4, dur * toSec * 1.5, {left: Math.min(700, window.innerWidth - 100 - 10), ease: Linear.easeNone});
 	await asyncTween(sq4, dur * toSec * 1.5, {top: window.innerHeight - 100, ease: Bounce.easeOut});
@@ -87,6 +89,7 @@ async function notSimpleTween() {
 	
 	let dur = 1 * toSec;
 	
+	console.time("notsimple");
 	await asyncForEach(squares, async (square, index) => {
 		let coords = pointAround(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2 - sqs, window.innerHeight / 2, 360 * index / squares.length * toRadians);
 		return asyncTween(square, dur * 2, {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2, ease: Quart.inOut});
@@ -101,6 +104,7 @@ async function notSimpleTween() {
 		let coords = pointAround(window.innerWidth  / 2, window.innerHeight / 2, window.innerWidth / 2 - Math.min((window.innerWidth - sqs) / 2, (window.innerHeight - sqs) / 2), window.innerHeight / 2, 360 * index / squares.length * toRadians);
 		TweenMax.to(square, dur * 60, {delay: dur * 400, left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2, opacity: 1, ease: Quart.inOut});
 	});
+	console.timeEnd("notsimple");
 }
 
 async function notSimpleTween2() {

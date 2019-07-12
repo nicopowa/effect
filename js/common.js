@@ -27,6 +27,7 @@ const toMs = 1000 / 60;
 
 const transform = prefix.css + "transform"; // prefixed transform property
 const filter = prefix.css + "filter"; // prefixed filter property
+const shadow = prefix.css + "box-shadow"; // prefixed shadow property
 
 const plz = ms => new Promise(resolve => setTimeout(resolve, ms)); // async wait
 

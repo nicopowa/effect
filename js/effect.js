@@ -110,23 +110,10 @@ class Effect {
 	* @nocollapse
 	*/
 	static effectTick(res, eff) {
-		//console.log("tick");
 		if(--eff.d > 0) res.push(eff); // delayed, wait
 		else {
 			if(eff.d === 0) eff.p = Effect.parseProps(eff.el, eff.p); // finished delay, calc props before animation
-			eff.c = Math.min(eff.t, eff.c + this.step); // in case skip frame exceeds total frames
-			
-			/*Object.keys(eff.p).forEach(prop => // loop props
-				eff.el.style[prop] = // calc frame value
-					eff.p[prop].strBefore // prepend CSS
-					+ Effect[eff.e]( // current value, apply easing
-						eff.c, // t
-						eff.p[prop].fromValue, // b
-						eff.p[prop].valueGap, // c
-						eff.t) // d
-					+ eff.p[prop].strAfter // append CSS
-			);*/
-			
+			eff.c = Math.min(eff.t, eff.c + this.step); // in case skip frame exceeds total frames			
 			for(let prop in eff.p) { // gain 24 bytes minify, TODO check perf vs Object.keys
 				eff.el.style[prop] = // calc frame value
 					eff.p[prop].strBefore // prepend CSS
@@ -137,7 +124,6 @@ class Effect {
 						eff.t) // d
 					+ eff.p[prop].strAfter // append CSS
 			}
-			
 			if(eff.c < eff.t) res.push(eff); // wait next frame
 			else eff.r(); // done, resolve and don't push
 		}

@@ -1,3 +1,10 @@
+/*
+* Effect
+* tiny animation engine
+* Nico Pr 2019
+* https://nicopr.fr/effect
+*/
+
 /**
 * @export
 */
@@ -8,18 +15,17 @@ class Effect {
 	* @param {Object} options: effect options
 	*/
 	constructor(target, options) {
-		if(!options["delay"]) options["props"] = Effect.parseProps(target, options["props"]); // no delay, parse props
 		this.options = {
-			effid: parseInt(target.getAttribute("data-eff"), 10) || ++Effect._id, // element effect reference
+			effid: +target.getAttribute("data-eff") || ++Effect._id, // element effect reference
 			el: target, // animated element
-			d: options["delay"]++ || -1, // delay frames
+			d: options["delay"]++ || 1, // delay frames
 			c: 0, // current frame
 			t: options["frames"], // total frames
 			p: options["props"], // CSS props
 			e: options["ease"] || "no", // easing function
 			o: options["override"] || false // override
 		};
-		target.setAttribute("data-eff", this.options.effid);
+		target.setAttribute("data-eff", this.options.effid); // assign id to HTML element
 	}
 	
 	/**
@@ -28,7 +34,7 @@ class Effect {
 	* @return {Promise}
 	*/
 	play() {
-		let prom = new Promise(resolve => { this.options.r = resolve; }); // lol closure remove braces more size
+		let prom = new Promise(resolve => { this.options.r = resolve; });
 		Effect.addEffect(this.options);
 		return prom;
 	}
@@ -43,86 +49,85 @@ class Effect {
 	
 	/**
 	* @static
+	* @private
 	* @nocollapse
+	* @method init: set up things
 	*/
 	static init() {
 		this._id = 0; // id counter
-		this.frameLoop = -1; // raf loop
-		this.effects = []; // effects queue
-		this.propRegex = /^([a-z\)\(]*)([e\d\.-]+)(.*)$/; // parse css prop
-		//this.transRegex = /^(\w+)/;
+		this.frameLoop = undefined; // raf loop
+		this.effects = []; // effects pool
+		this.propSplit = /(-?\d+(?:.\d+)?(?:e-?\d+)?)/; // split numbers
 	}
 	
 	/**
 	* @static
+	* @private
 	* @nocollapse
+	* @method addEffect: add to pool
+	* @param {Object} effect: options object
 	*/
 	static addEffect(effect) {
 		if(effect.o) this.removeEffect(effect.effid); // override
-		this.effects.push(effect); // push to queue
-		if(this.frameLoop !== -1) return; // frame loop already running
-		this.frameLoop = window.requestAnimationFrame(stamp => {
-			this.stamp = stamp;
-			this.animationFrame(this.stamp);
-		});
+		this.effects.push(effect); // push to pool
+		if(!this.frameLoop) { // not running, lift off
+			this.frameLoop = window.requestAnimationFrame(stamp => { // dummy first raf to get DOMHighResTimeStamp
+				this.stamp = stamp; // keep first timestamp
+				this.animationFrame(this.stamp); // draw first frame
+			});
+		}
 	}
 	
 	/**
 	* @static
+	* @private
 	* @nocollapse
+	* @method removeEffect: remove from pool
+	* @param {number} id: effect id
 	*/
 	static removeEffect(id) {
-		this.effects = this.effects.filter(eff => eff.effid !== id); // remove
+		// TODO clean effect disposal and null ?
+		this.effects = this.effects.filter(eff => eff.effid != id); // savage <3
 	}
 	
 	/**
 	* @static
 	* @nocollapse
-	*/
-	static hookNextFrame() {
-		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this)); // next frame plz
-	}
-	
-	/**
-	* @static
-	* @nocollapse
-	*/
-	static cancelNextFrame() {
-		window.cancelAnimationFrame(this.frameLoop); // cancel frame loop
-		this.frameLoop = -1; // reset
-	}
-	
-	/**
-	* @static
-	* @nocollapse
+	* @private
+	* @method animationFrame: calc stamp and loop effects
+	* @param {number} stamp: from requestAnimationFrame
 	*/
 	static animationFrame(stamp) {
-		this.step = 1 + Math.round((stamp - this.stamp) / 60); // shall we skip frames ?
-		//if(this.step > 1) console.log("skip", this.step - 1);
+		let step = 1 + Math.round((stamp - this.stamp) / 60); // drop some frame
+		//if(step > 1) console.log("DROP", step - 1);
 		this.stamp = stamp; // keep frame timestamp
-		this.hookNextFrame(); // request next frame
-		this.effects = this.effects.reduce(this.effectTick.bind(this), []); // loop effects
-		if(!this.effects.length) this.cancelNextFrame(); // empty queue, stop frame loop
+		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this)); // request next frame
+		this.effects = this.effects.reduce((res, eff) => this.effectTick(res, eff, step), []); // loop effects
+		if(!this.effects.length) this.frameLoop = window.cancelAnimationFrame(this.frameLoop); // pool is empty, stop frame loop
 	}
 	
 	/**
 	* @static
 	* @nocollapse
+	* @private
+	* @method effectTick: called from frame loop
+	* @param {Array} res: reduce accumulator
+	* @param {Object} eff: current effect
+	* @param {number} step: frame step
 	*/
-	static effectTick(res, eff) {
+	static effectTick(res, eff, step) {
 		if(--eff.d > 0) res.push(eff); // delayed, wait
 		else {
-			if(eff.d === 0) eff.p = Effect.parseProps(eff.el, eff.p); // finished delay, calc props before animation
-			eff.c = Math.min(eff.t, eff.c + this.step); // in case skip frame exceeds total frames			
-			for(let prop in eff.p) { // gain 24 bytes minify, TODO check perf vs Object.keys
-				eff.el.style[prop] = // calc frame value
-					eff.p[prop].strBefore // prepend CSS
-					+ Effect[eff.e]( // current value, apply easing
-						eff.c, // t
-						eff.p[prop].fromValue, // b
-						eff.p[prop].valueGap, // c
-						eff.t) // d
-					+ eff.p[prop].strAfter // append CSS
+			if(eff.d === 0) eff.p = Effect.parseProps(eff.el, eff.p); // finished delay, get target CSS props before effect
+			eff.c = Math.min(eff.t, eff.c + step); // drop frame can exceed total frames for very short effects
+			for(let propName in eff.p) { // loop CSS props
+				let prop = eff.p[propName], // tmp
+				update = prop.fromValues.slice(0); // clone start values
+				for(let i = 0; i < prop.indexes.length; i++) { // loop numeric values
+					let index = prop.indexes[i]; // tmp
+					update[index] = Effect[eff.e](eff.c, prop.fromValues[index], prop.gaps[i], eff.t).toFixed(2); // current frame value, apply easing, round 2 digits
+				}
+				eff.el.style[propName] = update.join(""); // apply new CSS value
 			}
 			if(eff.c < eff.t) res.push(eff); // wait next frame
 			else eff.r(); // done, resolve and don't push
@@ -136,10 +141,11 @@ class Effect {
 	* @export
 	* @static
 	* @nocollapse
-	* @param t: current time or position / can be frames, steps, seconds, ms, whatever
-	* @param b: beginning value
-	* @param c: change between the beginning & destination value
-	* @param d: total time of the tween
+	* @method no: linear ease
+	* @param {number} t: current time or position / can be frames, steps, seconds, ms, whatever
+	* @param {number} b: beginning value
+	* @param {number} c: change between the beginning & destination value
+	* @param {number} d: total time of the tween
 	*/
 	static no(t, b, c, d) {
 		return c * t / d + b;
@@ -149,6 +155,11 @@ class Effect {
 	* @export
 	* @static
 	* @nocollapse
+	* @method quartOut: 
+	* @param {number} t: 
+	* @param {number} b: 
+	* @param {number} c: 
+	* @param {number} d: 
 	*/
 	static quartOut(t, b, c, d) {
 		return -c * ((t = t / d - 1) * t * t * t - 1) + b;
@@ -158,6 +169,11 @@ class Effect {
 	* @export
 	* @static
 	* @nocollapse
+	* @method quartIn: 
+	* @param {number} t: 
+	* @param {number} b: 
+	* @param {number} c: 
+	* @param {number} d: 
 	*/
 	static quartIn(t, b, c, d) {
 		return c * (t /= d) * t * t * t + b;
@@ -167,6 +183,11 @@ class Effect {
 	* @export
 	* @static
 	* @nocollapse
+	* @method quartInOut: 
+	* @param {number} t: 
+	* @param {number} b: 
+	* @param {number} c: 
+	* @param {number} d: 
 	*/
 	static quartInOut(t, b, c, d) {
 		if((t /= d / 2) < 1) return c / 2 * t * t + b;
@@ -176,38 +197,34 @@ class Effect {
 	/**
 	* @static
 	* @nocollapse
-	* @method parseProps: parse HTML element css properties
+	* @method parseProps: parse effect start & end CSS properties
 	* @param {Element} target: element
 	* @param {Object} props: CSS properties
 	*/
 	static parseProps(target, props) {
-		for(let prop in props) {
-			let from = Effect.propRegex.exec(target.style[prop] || window.getComputedStyle(target).getPropertyValue(prop)), 
-			to = Effect.propRegex.exec(props[prop]),
-			fromValue = parseFloat(from[2]),
-			toValue = parseFloat(to[2]), 
-			valueGap = toValue - fromValue;
-			props[prop] = {
-				fromValue: fromValue, 
-				//toValue: toValue, // not needed for tween and ease
-				valueGap: valueGap, // only need gap
-				strBefore: to[1] || from[1], 
-				strAfter: to[3] || from[3]
-			};
-			//console.log("from", props[prop].fromValue, "to", props[prop].toValue);
+		for(let prop in props) { // loop effect props
+			let fromValues = this.parseProp(target.style[prop] || window.getComputedStyle(target).getPropertyValue(prop)), // parse start values
+			toValues = this.parseProp(props[prop]), // parse end values
+			gaps = [], indexes = []; // init gaps and numeric values indexes
+			for(let i = 0; i < fromValues.length; i++) if(!isNaN(fromValues[i])) indexes.push(i); // find numeric values indexes
+			for(let i = toValues.length; i < fromValues.length; i++) toValues.push(fromValues[i]); // copy unit from start values if ommited // TODO better
+			for(let i = 0; i < indexes.length; i++) gaps.push(toValues[indexes[i]] - fromValues[indexes[i]]); // calc gaps between start and end values
+			props[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
 		}
 		return props;
 	}
 	
-	/*static getTransform(target, prop) {
-		let transform = this.transRegex.exec(prop), 
-		matrix = window.getComputedStyle(target, null).getPropertyValue("transform").match(/([-e\.\d]+)/g).map(val => parseFloat(val)), // switch prefixes ?
-		scale = Math.sqrt(Math.pow(matrix[0], 2) + Math.pow(matrix[1], 2)), 
-		rotate = Math.round(Math.asin(matrix[1] / scale) * (180 / Math.PI));
-		if(1 / rotate === -Infinity) rotate += 360;
-		let transforms = {"scale": scale, "rotate": rotate, "translateX": matrix[4], "translateY": matrix[5]}; // TODO skew scaleX scaleY
-		return [transform[0] + "(", transforms[transform[0]], ")"];
-	}*/
+	/**
+	* @static
+	* @nocollapse
+	* @method parseProp: parse number values from string
+	* @param {string} value: 
+	*/
+	static parseProp(value) {
+		//console.log(value);
+		return String(value).split(this.propSplit).filter(Boolean).map(value => isNaN(value) ? value : +value); // split strings and numbers, remove empty strings, cast numbers
+	}
+	
 }
 
 Effect.init();

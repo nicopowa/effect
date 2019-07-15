@@ -1,5 +1,6 @@
 
 
+
 # Effect
 
 Tiny animation engine
@@ -16,6 +17,7 @@ https://nicopr.fr/effect
 
 # Why ?
 Playing with vanilla JS ice cream since it's hot in Paris these days.
+
 A web page with a menu, a picture and some text doesn't require 2Mb JS code.
 
 # Demo

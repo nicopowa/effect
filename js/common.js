@@ -11,23 +11,16 @@ function pointAround(centerx, centery, x, y, angle) {
 let sqs = Math.min(window.innerWidth, window.innerHeight) / 10;
 
 const prefix = (function () { // get browser prefix
-	let styles = window.getComputedStyle(document.documentElement, ""),
-		pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles.OLink === "" && ["", "o"]))[1],
-		dom = ("WebKit|Moz|MS|O").match(new RegExp("(" + pre + ")", "i"))[1];
-	return {
-		dom: dom,
-		lowercase: pre,
-		css: "-" + pre + "-",
-		js: pre[0].toUpperCase() + pre.substr(1)
-	};
+	let styles = window.getComputedStyle(document.documentElement, ""), pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles.OLink === "" && ["", "o"]))[1]
+	return pre == "moz" ? "" : "-" + pre + "-";
 })();
 
 const toSec = 1 / 60;
 const toMs = 1000 / 60;
 
-const transform = prefix.css + "transform"; // prefixed transform property
-const filter = prefix.css + "filter"; // prefixed filter property
-const shadow = prefix.css + "box-shadow"; // prefixed shadow property
+const transform = prefix + "transform"; // prefixed transform property
+const filter = prefix + "filter"; // prefixed filter property
+const shadow = prefix + "box-shadow"; // prefixed shadow property
 
 const plz = ms => new Promise(resolve => setTimeout(resolve, ms)); // async wait
 

@@ -11,7 +11,7 @@ async function main() {
 	
 	//overrideTest(); await plz(500);
 	await simpleEffect();
-	await notSimpleEffect();
+	//await notSimpleEffect();
 	//notSimpleEffect2();
 	
 }
@@ -55,21 +55,21 @@ async function simpleEffect() {
 	
 	console.time("simple");
 	
-	new Effect(sq1, {"frames": dur, "props": {"left": maxLeft, [shadow]: "0px 3px 3px 0px #656565"}, "ease": "quartInOut"}).play();
+	new Effect(sq1, {"frames": dur, "props": {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "ease": "quartInOut"}).play();
 	new Effect(sq2, {"frames": dur, "props": {"left": maxLeft, "opacity": 0, [transform]: "scale(0.5)"}, "ease": "quartInOut"}).play();
 	new Effect(sq3, {"frames": dur, "props": {"left": maxLeft, [filter]: "blur(10px)", [transform]: "rotate(360deg)"}, "ease": "quartInOut"}).play();
 	
-	new Effect(sq1, {"frames": dur, delay: dur, "props": {"left": 10}, "ease": "quartInOut"}).play();
+	new Effect(sq1, {"frames": dur, delay: dur, "props": {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "ease": "quartInOut"}).play();
 	new Effect(sq2, {"frames": dur, delay: dur, "props": {"left": 10, opacity: 1, [transform]: "scale(1)"}, "ease": "quartInOut"}).play();
 	new Effect(sq3, {"frames": dur, delay: dur, "props": {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "ease": "quartInOut"}).play();
 	
 	await plz(2 * dur * toMs);
 		
-	await new Effect(sq1, {"frames": dur, "props": {"left": maxLeft}, "ease": "quartInOut"}).play();
+	await new Effect(sq1, {"frames": dur, "props": {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "ease": "quartInOut"}).play();
 	await new Effect(sq2, {"frames": dur, "props": {"left": maxLeft, "opacity": 0, [transform]: "scale(0.5)"}, "ease": "quartInOut"}).play();
 	await new Effect(sq3, {"frames": dur, "props": {"left": maxLeft, [filter]: "blur(10px)", [transform]: "rotate(360deg)"}, "ease": "quartInOut"}).play();
 	
-	await new Effect(sq1, {"frames": dur, "props": {"left": 10}, "ease": "quartInOut"}).play();
+	await new Effect(sq1, {"frames": dur, "props": {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "ease": "quartInOut"}).play();
 	await new Effect(sq2, {"frames": dur, "props": {"left": 10, "opacity": 1, [transform]: "scale(1)"}, "ease": "quartInOut"}).play();
 	await new Effect(sq3, {"frames": dur, "props": {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "ease": "quartInOut"}).play();
 	

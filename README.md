@@ -41,9 +41,17 @@ https://nicopowa.github.io/effect/
     let myEffect = new Effect(myElement, {frames: 60, props: {width: 100}}); // or "100px"
     myEffect.play();
 
+    // async effect
+    myElement.style.left= "10px"; // important ! set initial value
+    let go = new Effect(myElement, {frames: 60, props: {left: 100}}); // or "100px"
+    let back = new Effect(myElement, {frames: 60, props: {left: 10}}); // or "10px"
+    await go.play();
+    await back.play();
+	
 # Easing
 
 3 built-in easing functions : quartIn, quartOut, quartInOut
+
 To add custom easing :
 
     Effect.bounceOut = function(t, b, c, d) {

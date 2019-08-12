@@ -10,9 +10,8 @@ java -jar ../../_closure/compiler.jar ^
 --warning_level VERBOSE ^
 --language_in ES_NEXT ^
 --language_out ES5_STRICT ^
---rewrite_polyfills false ^
 --externs ../../_closure/externs/effect.externs.js ^
 --js js/common.js ^
 --js js/test_effect.js ^
---js_output_file js/test.min.js
+--js_output_file js/test_effect.min.js
 popd

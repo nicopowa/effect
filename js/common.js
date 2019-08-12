@@ -11,7 +11,7 @@ function pointAround(centerx, centery, x, y, angle) {
 let sqs = Math.min(window.innerWidth, window.innerHeight) / 10;
 
 const prefix = (function () { // get browser prefix
-	let styles = window.getComputedStyle(document.documentElement, ""), pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles.OLink === "" && ["", "o"]))[1]
+	let styles = window.getComputedStyle(document.documentElement, ""), pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles["OLink"] === "" && ["", "o"]))[1]
 	return pre == "moz" ? "" : "-" + pre + "-";
 })();
 

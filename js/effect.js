@@ -12,20 +12,30 @@ class Effect {
 	
 	/**
 	* @param {Element} target: who wants to move ?
-	* @param {Object} options: effect options
+	* @param {number} frames: number of frames
+	* @param {Object} props: CSS props
+	* @param {string} ease: easing function name
+	* @param {number} delay: frames before start
+	* @param {boolean} override: stop current effect
+	* @param {Function} callback: effect end function
 	*/
-	constructor(target, options) {
-		this.options = {
+	constructor(target, frames, props, ease, delay, override, callback) { // change to (target, frames, props, ease, delay, override, callback) ?
+		delay = delay++ || 1; // parse delay
+		this.params = { // all params
 			effid: +target.getAttribute("data-eff") || ++Effect._id, // element effect reference
 			el: target, // animated element
-			d: options["delay"]++ || 1, // delay frames
+			d: delay, // delay frames
+			od: delay, // keep original delay
 			c: 0, // current frame
-			t: options["frames"], // total frames
-			p: options["props"], // CSS props
-			e: options["ease"] || "no", // easing function
-			o: options["override"] || false // override
+			s: {}, // CSS props
+			t: frames, // total frames
+			p: props, // keep original props
+			e: ease || "no", // easing function
+			o: override || false, // override
+			k: callback || function() {}, // callback
+			f: 2 // effect numeric values precision // TODO rgb color codes easing precision bug on older devices
 		};
-		target.setAttribute("data-eff", this.options.effid); // assign id to HTML element
+		target.setAttribute("data-eff", this.params.effid); // assign id to HTML element
 	}
 	
 	/**
@@ -34,8 +44,9 @@ class Effect {
 	* @return {Promise}
 	*/
 	play() {
-		let prom = new Promise(resolve => { this.options.r = resolve; });
-		Effect.addEffect(this.options);
+		this.params.c = 0; // reset current frame
+		let that = this, prom = new Promise(resolve => { that.params.r = resolve; });
+		Effect.addEffect(that.params);
 		return prom;
 	}
 	
@@ -44,7 +55,7 @@ class Effect {
 	* @method stop: stop effect
 	*/
 	stop() {
-		Effect.removeEffect(this.options.effid);
+		Effect.removeEffect(this.params.effid);
 	}
 	
 	/**
@@ -57,7 +68,7 @@ class Effect {
 		this._id = 0; // id counter
 		this.frameLoop = undefined; // raf loop
 		this.effects = []; // effects pool
-		this.propSplit = /(-?\d+(?:.\d+)?(?:e-?\d+)?)/; // split numbers
+		this.propSplit = /(-?\d+(?:.\d+)?(?:e-?\d+)?)/; // split numbers // class variable or in split argument ?
 	}
 	
 	/**
@@ -65,7 +76,7 @@ class Effect {
 	* @private
 	* @nocollapse
 	* @method addEffect: add to pool
-	* @param {Object} effect: options object
+	* @param {Object} effect: params object
 	*/
 	static addEffect(effect) {
 		if(effect.o) this.removeEffect(effect.effid); // override
@@ -98,12 +109,15 @@ class Effect {
 	* @param {number} stamp: from requestAnimationFrame
 	*/
 	static animationFrame(stamp) {
-		let step = 1 + Math.round((stamp - this.stamp) / 60); // drop some frame
+		if(!this.effects.length) return this.frameLoop = undefined; // pool is empty, stop frame loop
+		let step = 1 + Math.round((stamp - this.stamp) / 60); // d-d-drop the frames
 		//if(step > 1) console.log("DROP", step - 1);
 		this.stamp = stamp; // keep frame timestamp
-		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this)); // request next frame
+		/*this.frameLoop = window.requestAnimationFrame(stamp => {
+			this.animationFrame(stamp); // request next frame // old ipad fix
+		});*/
+		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this));
 		this.effects = this.effects.reduce((res, eff) => this.effectTick(res, eff, step), []); // loop effects
-		if(!this.effects.length) this.frameLoop = window.cancelAnimationFrame(this.frameLoop); // pool is empty, stop frame loop
 	}
 	
 	/**
@@ -118,19 +132,24 @@ class Effect {
 	static effectTick(res, eff, step) {
 		if(--eff.d > 0) res.push(eff); // delayed, wait
 		else {
-			if(eff.d === 0) eff.p = Effect.parseProps(eff.el, eff.p); // finished delay, get target CSS props before effect
+			if(eff.d === 0) Effect.parseProps(eff); // finished delay, get target CSS props before effect
 			eff.c = Math.min(eff.t, eff.c + step); // drop frame can exceed total frames for very short effects
-			for(let propName in eff.p) { // loop CSS props
-				let prop = eff.p[propName], // tmp
+			for(let propName in eff.s) { // loop CSS props
+				let prop = eff.s[propName], // tmp
 				update = prop.fromValues.slice(0); // clone start values
 				for(let i = 0; i < prop.indexes.length; i++) { // loop numeric values
 					let index = prop.indexes[i]; // tmp
-					update[index] = Effect[eff.e](eff.c, prop.fromValues[index], prop.gaps[i], eff.t).toFixed(2); // current frame value, apply easing, round 2 digits
+					update[index] = Effect[eff.e](eff.c, prop.fromValues[index], prop.gaps[i], eff.t).toFixed(eff.f); // current frame value, apply easing, round 2 digits
 				}
+				//console.log(propName + " " + update.join(""));
 				eff.el.style[propName] = update.join(""); // apply new CSS value
 			}
 			if(eff.c < eff.t) res.push(eff); // wait next frame
-			else eff.r(); // done, resolve and don't push
+			else { // done, resolve and don't push
+				eff.d = eff.od;
+				eff.r();
+				eff.k();
+			}
 		}
 		return res;
 	}
@@ -198,20 +217,19 @@ class Effect {
 	* @static
 	* @nocollapse
 	* @method parseProps: parse effect start & end CSS properties
-	* @param {Element} target: element
-	* @param {Object} props: CSS properties
+	* @param {Object} eff: the effect
 	*/
-	static parseProps(target, props) {
-		for(let prop in props) { // loop effect props
-			let fromValues = this.parseProp(target.style[prop] || window.getComputedStyle(target).getPropertyValue(prop)), // parse start values
-			toValues = this.parseProp(props[prop]), // parse end values
+	static parseProps(eff) {
+		for(let prop in eff.p) { // loop effect props
+			let fromValues = this.parseProp(eff.el.style[prop] || window.getComputedStyle(eff.el).getPropertyValue(prop)), // parse start values
+			toValues = this.parseProp(eff.p[prop]), // parse end values
 			gaps = [], indexes = []; // init gaps and numeric values indexes
 			for(let i = 0; i < fromValues.length; i++) if(!isNaN(fromValues[i])) indexes.push(i); // find numeric values indexes
 			for(let i = toValues.length; i < fromValues.length; i++) toValues.push(fromValues[i]); // copy unit from start values if ommited // TODO better
 			for(let i = 0; i < indexes.length; i++) gaps.push(toValues[indexes[i]] - fromValues[indexes[i]]); // calc gaps between start and end values
-			props[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
+			eff.s[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
+			//console.log(prop + "  FROM  " + fromValues.join("") + "  TO  " + toValues.join(""));
 		}
-		return props;
 	}
 	
 	/**

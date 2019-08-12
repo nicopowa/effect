@@ -16,7 +16,6 @@
     if(!window.requestAnimationFrame) {
 		console.log("inject requestAnimationFrame polyfill");
         window.requestAnimationFrame = function/** number */(callback) {
-			console.log("RAF");
 			var currTime = new Date().getTime();
 			var timeToCall = Math.max(0, 16.67 - (currTime - lastTime));
 			var id = window.setTimeout(function() {

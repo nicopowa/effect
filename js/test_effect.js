@@ -1,3 +1,59 @@
+window.onload = main;
+
+function pointAround(centerx, centery, x, y, angle) {
+	let x1 = x - centerx;
+	let y1 = y - centery;
+	let x2 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
+	let y2 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+	return {x: x2 + centerx, y: y2 + centery};
+}
+
+let sqs = Math.min(window.innerWidth, window.innerHeight) / 10;
+
+const prefix = (function () { // get browser prefix
+	let styles = window.getComputedStyle(document.documentElement, ""), pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles["OLink"] === "" && ["", "o"]))[1]
+	return pre == "moz" ? "" : "-" + pre + "-";
+})();
+
+const toSec = 1 / 60;
+const toMs = 1000 / 60;
+
+const transform = prefix + "transform"; // prefixed transform property
+const filter = prefix + "filter"; // prefixed filter property
+const shadow = prefix + "box-shadow"; // prefixed shadow property
+
+const plz = ms => new Promise(resolve => setTimeout(resolve, ms)); // async wait
+
+const toRadians = Math.PI / 180; // convert
+
+const asyncForEach = async (array, callback) => {
+	for(let index = 0; index < array.length; index++) await callback(array[index], index, array);
+};
+
+const randXCoord = () => Math.round(Math.random() * (window.innerWidth - sqs));
+
+const randYCoord = () => Math.round(Math.random() * (window.innerHeight - sqs));
+
+const randColor = () => {
+	let color = Math.floor(Math.random() * 16777216).toString(16);
+	return "#000000".slice(0, -color.length) + color;
+}
+
+function square(left, top, width, height, index) {
+	let sq = document.createElement("div");
+	sq.style.position = "absolute";
+	sq.style.left = left + "px";
+	sq.style.top = top + "px";
+	sq.style.width = width + "px";
+	sq.style.height = height + "px";
+	sq.style.textAlign = "center";
+	sq.style.verticalAlign = "center";
+	sq.style.lineHeight = height + "px";
+	sq.classList.add("square");
+	sq.innerHTML = index;
+	return sq;
+}
+
 async function main() {
 	
 	console.log("main");
@@ -10,11 +66,27 @@ async function main() {
 	}
 	
 	//overrideTest(); await plz(500);
+	//await verySimpleEffect();
 	await simpleEffect();
 	//await notSimpleEffect();
 	//notSimpleEffect2();
 	
 }
+
+async function verySimpleEffect() {
+	
+	let sq1 = square(10, 10, 100, 100, 0);
+	sq1.style.backgroundColor = "rgb(255, 0, 0)";
+	sq1.style.opacity = 1;
+	sq1.style[shadow] = "0px 0px 0px 0px #656565";
+	document.body.appendChild(sq1);
+	
+	let dur = 60;
+	let maxLeft = Math.min(window.innerWidth - 100 - 10, 500);
+	await new Effect(sq1, dur, {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "quartInOut").play();
+	await new Effect(sq1, dur, {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "quartInOut").play();
+}
+
 async function simpleEffect() {
 	
 	console.log("test simple");
@@ -48,39 +120,47 @@ async function simpleEffect() {
 	let dur = 60;
 	let maxLeft = Math.min(window.innerWidth - 100 - 10, 500);
 	
-	await new Effect(sq1, {"frames": dur / 2, "props": {"backgroundColor": "rgb(255, 0, 0)"}, "ease": "quartInOut"}).play();
-	await new Effect(sq2, {"frames": dur / 2, "props": {"backgroundColor": "rgb(0, 255, 0)"}, "ease": "quartInOut"}).play();
-	await new Effect(sq3, {"frames": dur / 2, "props": {"backgroundColor": "rgb(0, 0, 255)"}, "ease": "quartInOut"}).play();
-	await new Effect(sq4, {"frames": dur / 2, "props": {"backgroundColor": "rgb(0, 169, 255)"}, "ease": "quartInOut"}).play();
+	await new Effect(sq1, dur / 2, {"backgroundColor": "rgb(255, 0, 0)"}, "quartInOut").play();
+	await new Effect(sq2, dur / 2, {"backgroundColor": "rgb(0, 255, 0)"}, "quartInOut").play();
+	await new Effect(sq3, dur / 2, {"backgroundColor": "rgb(0, 0, 255)"}, "quartInOut").play();
+	await new Effect(sq4, dur / 2, {"backgroundColor": "rgb(0, 169, 255)"}, "quartInOut").play();
 	
 	console.time("simple");
 	
-	new Effect(sq1, {"frames": dur, "props": {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "ease": "quartInOut"}).play();
-	new Effect(sq2, {"frames": dur, "props": {"left": maxLeft, "opacity": 0, [transform]: "scale(0.5)"}, "ease": "quartInOut"}).play();
-	new Effect(sq3, {"frames": dur, "props": {"left": maxLeft, [filter]: "blur(10px)", [transform]: "rotate(360deg)"}, "ease": "quartInOut"}).play();
+	let firstEffect = new Effect(sq1, dur, {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "quartInOut");
+	let secondEffect = new Effect(sq2, dur, {"left": maxLeft, "opacity": 0, [transform]: "scale(0.5)"}, "quartInOut");
+	let thirdEffect = new Effect(sq3, dur, {"left": maxLeft, [filter]: "blur(10px)", [transform]: "rotate(360deg)"}, "quartInOut");
 	
-	new Effect(sq1, {"frames": dur, delay: dur, "props": {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "ease": "quartInOut"}).play();
-	new Effect(sq2, {"frames": dur, delay: dur, "props": {"left": 10, opacity: 1, [transform]: "scale(1)"}, "ease": "quartInOut"}).play();
-	new Effect(sq3, {"frames": dur, delay: dur, "props": {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "ease": "quartInOut"}).play();
+	firstEffect.play();
+	secondEffect.play();
+	thirdEffect.play();
+	
+	let firstEffectBack = new Effect(sq1, dur, {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "quartInOut", dur);
+	let secondEffectBack = new Effect(sq2, dur, {"left": 10, opacity: 1, [transform]: "scale(1)"}, "quartInOut", dur);
+	let thirdEffectBack = new Effect(sq3, dur, {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "quartInOut", dur);
+	
+	firstEffectBack.play();
+	secondEffectBack.play();
+	thirdEffectBack.play();
 	
 	await plz(2 * dur * toMs);
 		
-	await new Effect(sq1, {"frames": dur, "props": {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "ease": "quartInOut"}).play();
-	await new Effect(sq2, {"frames": dur, "props": {"left": maxLeft, "opacity": 0, [transform]: "scale(0.5)"}, "ease": "quartInOut"}).play();
-	await new Effect(sq3, {"frames": dur, "props": {"left": maxLeft, [filter]: "blur(10px)", [transform]: "rotate(360deg)"}, "ease": "quartInOut"}).play();
+	await firstEffect.play();
+	await secondEffect.play();
+	await thirdEffect.play();
 	
-	await new Effect(sq1, {"frames": dur, "props": {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "ease": "quartInOut"}).play();
-	await new Effect(sq2, {"frames": dur, "props": {"left": 10, "opacity": 1, [transform]: "scale(1)"}, "ease": "quartInOut"}).play();
-	await new Effect(sq3, {"frames": dur, "props": {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "ease": "quartInOut"}).play();
+	await firstEffectBack.play();
+	await secondEffectBack.play();
+	await thirdEffectBack.play();
 	
 	console.timeEnd("simple");
 	
-	new Effect(sq4, {"frames": dur * 1.5, "props": {"left": Math.min(700, document.body.clientWidth - 100 - 10), "backgroundColor": "rgb(0, 255, 0)"}, "ease": "no"}).play();
-	await new Effect(sq4, {"frames": dur * 1.5, "props": {"top": document.body.clientHeight - 100}, "ease": "bounceOut"}).play();
+	new Effect(sq4, dur * 1.5, {"left": Math.min(700, document.body.clientWidth - 100 - 10), "backgroundColor": "rgb(0, 255, 0)"}, "no").play();
+	await new Effect(sq4, dur * 1.5, {"top": document.body.clientHeight - 100}, "bounceOut").play();
 	
 	await plz(dur * toMs);
 	
-	[sq1, sq2, sq3, sq4].map(square => new Effect(square, {"frames": dur, "props": {"opacity": 0}, "ease": "quartInOut"}).play());
+	[sq1, sq2, sq3, sq4].map(square => new Effect(square, dur, {"opacity": 0}, "quartInOut").play());
 	
 	await plz(dur * toMs);
 	

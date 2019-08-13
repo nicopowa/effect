@@ -8,7 +8,7 @@ function pointAround(centerx, centery, x, y, angle) {
 	return {x: x2 + centerx, y: y2 + centery};
 }
 
-let sqs = Math.min(window.innerWidth, window.innerHeight) / 10;
+let sqs = Math.min(window.innerWidth, window.innerHeight) / 10; // square size
 
 const prefix = (function () { // get browser prefix
 	let styles = window.getComputedStyle(document.documentElement, ""), pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles["OLink"] === "" && ["", "o"]))[1]
@@ -26,13 +26,17 @@ const plz = ms => new Promise(resolve => setTimeout(resolve, ms)); // async wait
 
 const toRadians = Math.PI / 180; // convert
 
-const asyncForEach = async (array, callback) => {
+const asyncForEach = async (array, callback) => { // does the job
 	for(let index = 0; index < array.length; index++) await callback(array[index], index, array);
 };
 
-const randXCoord = () => Math.round(Math.random() * (window.innerWidth - sqs));
+const asyncForEachLast = async (array, callback) => { // loop and await only last element
+	for(var index = 0; index < array.length - 1; index++) callback(array[index], index, array);
+	await callback(array[index], index, array);
+};
 
-const randYCoord = () => Math.round(Math.random() * (window.innerHeight - sqs));
+const randXCoord = () => Math.round(Math.random() * (window.innerWidth - sqs)); // random x coord in screen
+const randYCoord = () => Math.round(Math.random() * (window.innerHeight - sqs)); // y
 
 const randColor = () => {
 	let color = Math.floor(Math.random() * 16777216).toString(16);
@@ -58,18 +62,19 @@ async function main() {
 	
 	console.log("main");
 	
-	Effect["bounceOut"] = function(t, b, c, d) {
+	Effect["bounceOut"] = function(t, b, c, d) { // some bounce
 		if((t /= d) < (1 / 2.75)) return c * (7.5625 * t * t) + b;
 		else if(t < (2 / 2.75)) return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
 		else if(t < (2.5 / 2.75)) return c * (7.5625 * (t -= (2.25 / 2.75))*t + .9375) + b;
 		else return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
 	}
 	
+	await plz(250);
+	
 	//overrideTest(); await plz(500);
-	//await verySimpleEffect();
+	await verySimpleEffect();
 	await simpleEffect();
-	//await notSimpleEffect();
-	//notSimpleEffect2();
+	await notSimpleEffect();
 	
 }
 
@@ -83,13 +88,24 @@ async function verySimpleEffect() {
 	
 	let dur = 60;
 	let maxLeft = Math.min(window.innerWidth - 100 - 10, 500);
-	await new Effect(sq1, dur, {"left": maxLeft, [shadow]: "rgb(0, 0, 0) 0px 8px 8px 3px"}, "quartInOut").play();
-	await new Effect(sq1, dur, {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "quartInOut").play();
+	let maxTop = Math.min(window.innerHeight - 100 - 10, 500);
+	
+	console.time("verysimple");
+	
+	await new Effect(sq1, dur, {"left": maxLeft}, "quartInOut").play();
+	await new Effect(sq1, dur, {"top": maxTop}, "quartInOut").play();
+	await new Effect(sq1, dur, {"left": 10}, "quartInOut").play();
+	await new Effect(sq1, dur, {"top": 10}, "quartInOut").play();
+	
+	
+	console.timeEnd("verysimple");
+	
+	await new Effect(sq1, dur, {"opacity": 0}, "quartInOut").play();
+	
+	document.body.removeChild(sq1);
 }
 
 async function simpleEffect() {
-	
-	console.log("test simple");
 	
 	let sq1 = square(10, 10, 100, 100, 0);
 	sq1.style.backgroundColor = "rgb(0, 0, 0)";
@@ -133,17 +149,15 @@ async function simpleEffect() {
 	
 	firstEffect.play();
 	secondEffect.play();
-	thirdEffect.play();
+	await thirdEffect.play();
 	
-	let firstEffectBack = new Effect(sq1, dur, {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "quartInOut", dur);
-	let secondEffectBack = new Effect(sq2, dur, {"left": 10, opacity: 1, [transform]: "scale(1)"}, "quartInOut", dur);
-	let thirdEffectBack = new Effect(sq3, dur, {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "quartInOut", dur);
+	let firstEffectBack = new Effect(sq1, dur, {"left": 10, [shadow]: "rgb(0, 0, 0) 0px 0px 0px 0px"}, "quartInOut");
+	let secondEffectBack = new Effect(sq2, dur, {"left": 10, opacity: 1, [transform]: "scale(1)"}, "quartInOut");
+	let thirdEffectBack = new Effect(sq3, dur, {"left": 10, [filter]: "blur(0px)", [transform]: "rotate(0deg)"}, "quartInOut");
 	
 	firstEffectBack.play();
 	secondEffectBack.play();
-	thirdEffectBack.play();
-	
-	await plz(2 * dur * toMs);
+	await thirdEffectBack.play();
 		
 	await firstEffect.play();
 	await secondEffect.play();
@@ -169,7 +183,6 @@ async function simpleEffect() {
 	document.body.removeChild(sq3);
 	document.body.removeChild(sq4);
 	
-	console.log("done");
 }
 
 async function notSimpleEffect() {
@@ -188,46 +201,27 @@ async function notSimpleEffect() {
 	}
 	squares.reverse();
 	
-	console.time("notsimple");
+	
 	await asyncForEach(squares, async (square, index) => {
 		let coords = pointAround(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2 - sqs, window.innerHeight / 2, 360 * index / squares.length * toRadians);
-		return new Effect(square, {frames: 2, props: {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2}, ease: "quartInOut"}).play();
+		return new Effect(square, 2, {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2}, "quartInOut").play();
 	});
 	await plz(60 * 20);
-	squares.map((square, index) => new Effect(square, {frames: 90, props: {left: index % nsqw * sqs, top: Math.floor(index / nsqw) * sqs, "border-radius": 0}, ease: "quartInOut"}).play());
-	squares.map((square, index) => new Effect(square, {delay: 90, frames: 30, props: {[filter]: "blur(10px)"}, ease: "quartInOut"}).play());
-	squares.map((square, index) => new Effect(square, {delay: 150, frames: 30, props: {[filter]: "blur(0px)"}, ease: "quartInOut"}).play());
-	squares.map((square, index) => new Effect(square, {delay: 210, frames: 60, props: {left: randXCoord(), top: randYCoord(), "border-radius": sqs / 2}, ease: "quartInOut"}).play());
-	squares.map((square, index) => new Effect(square, {delay: 300, frames: 60, props: {left: (window.innerWidth - sqs) / 2, top: (window.innerHeight - sqs) / 2, "border-radius": 0, opacity: 0.05}, ease: "quartInOut"}).play());
-	squares.map((square, index) => {
-		let coords = pointAround(window.innerWidth  / 2, window.innerHeight / 2, window.innerWidth / 2 - Math.min((window.innerWidth - sqs) / 2, (window.innerHeight - sqs) / 2), window.innerHeight / 2, 360 * index / squares.length * toRadians);
-		new Effect(square, {delay: 400, frames: 60, props: {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2, opacity: 1}, ease: "quartInOut"}).play();
-	});
-	console.timeEnd("notsimple");
-}
-
-async function notSimpleEffect2() {
-	let squares = [];
-	let nsqw = Math.round(window.innerWidth / sqs);
-	let nsqh = Math.round(window.innerHeight / sqs);
-	let num = nsqw * nsqh;
-	for(let i = 0; i < num; i++) {
-		let sq = square((window.innerWidth - sqs) / 2, (window.innerHeight - sqs) / 2, sqs, sqs, i);
-		sq.style.backgroundColor = randColor();
-		sq.style[filter] = "blur(0px)"
-		sq.style["border-radius"] = "0px";
-		sq.style.zIndex = i;
-		document.body.appendChild(sq);
-		squares.push(sq);
-	}
-	squares.reverse();
+	let dur = 60;
 	
-	squares.map((square, index) => {
-		let coords = pointAround(window.innerWidth  / 2, window.innerHeight / 2, window.innerWidth / 2 - Math.min((window.innerWidth - sqs - 1) / 2, (window.innerHeight - sqs - 1) / 2), window.innerHeight / 2, 360 * index / squares.length * toRadians);
-		new Effect(square, {delay: 40, frames: 60, props: {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2, opacity: 1}, ease: "quartInOut"}).play();
+	console.time("notsimple");
+	
+	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {left: index % nsqw * sqs, top: Math.floor(index / nsqw) * sqs, "border-radius": 0}, "quartInOut").play());
+	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {[filter]: "blur(10px)"}, "quartInOut").play());
+	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {[filter]: "blur(0px)"}, "quartInOut").play());
+	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {left: randXCoord(), top: randYCoord(), "border-radius": sqs / 2}, "quartInOut").play());
+	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {left: (window.innerWidth - sqs) / 2, top: (window.innerHeight - sqs) / 2, "border-radius": 0, opacity: 0.05}, "quartInOut").play());
+	await asyncForEachLast(squares, (square, index) => {
+		let coords = pointAround(window.innerWidth  / 2, window.innerHeight / 2, window.innerWidth / 2 - Math.min((window.innerWidth - sqs) / 2, (window.innerHeight - sqs) / 2), window.innerHeight / 2, 360 * index / squares.length * toRadians);
+		return new Effect(square, dur, {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2, opacity: 1}, "quartInOut").play();
 	});
-	squares.map(square => new Effect(square, {delay: 130, frames: 60, props: {left: (window.innerWidth - sqs) / 2, top: (window.innerHeight - sqs) / 2, "border-radius": 0, opacity: 1}, ease: "quartInOut"}).play());
-
+	
+	console.timeEnd("notsimple");
 }
 
 async function overrideTest() {

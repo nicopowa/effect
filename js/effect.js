@@ -11,6 +11,8 @@
 class Effect {
 	
 	/**
+	* new Effect(myElement, 60, {backgroundColor: "rgba(0, 0, 255)"}, "quartOut");
+	*
 	* @param {Element} target: who wants to move ?
 	* @param {number} frames: number of frames
 	* @param {Object} props: CSS props
@@ -19,21 +21,21 @@ class Effect {
 	* @param {boolean} override: stop current effect
 	* @param {Function} callback: effect end function
 	*/
-	constructor(target, frames, props, ease, delay, override, callback) { // change to (target, frames, props, ease, delay, override, callback) ?
+	constructor(target, frames, props, ease, delay, override, callback) {
 		delay = delay++ || 1; // parse delay
 		this.params = { // all params
 			effid: +target.getAttribute("data-eff") || ++Effect._id, // element effect reference
-			el: target, // animated element
-			d: delay, // delay frames
-			od: delay, // keep original delay
-			c: 0, // current frame
-			s: {}, // CSS props
-			t: frames, // total frames
-			p: props, // keep original props
-			e: ease || "no", // easing function
-			o: override || false, // override
-			k: callback || function() {}, // callback
-			f: 2 // effect numeric values precision // TODO rgb color codes easing precision bug on older devices
+			subject: target, // animated element
+			later: delay, // delay frames
+			when: delay, // keep original delay
+			elapsed: 0, // current frame
+			newlook: {}, // target CSS props
+			sthap: frames, // total frames
+			props: props, // keep original props
+			twist: ease || "no", // easing function
+			pwnd: override || false, // override
+			dring: callback || function() {}, // callback
+			sharp: 2 // numeric values precision // TODO rgb color codes easing precision bug on older devices
 		};
 		target.setAttribute("data-eff", this.params.effid); // assign id to HTML element
 	}
@@ -44,8 +46,8 @@ class Effect {
 	* @return {Promise}
 	*/
 	play() {
-		this.params.c = 0; // reset current frame
-		let that = this, prom = new Promise(resolve => { that.params.r = resolve; });
+		this.params.elapsed = 0; // reset current frame
+		let that = this, prom = new Promise(resolve => { that.params.kept = resolve; });
 		Effect.addEffect(that.params);
 		return prom;
 	}
@@ -66,9 +68,9 @@ class Effect {
 	*/
 	static init() {
 		this._id = 0; // id counter
-		this.frameLoop = undefined; // raf loop
+		this.frameLoop = 0; // raf loop
 		this.effects = []; // effects pool
-		this.propSplit = /(-?\d+(?:.\d+)?(?:e-?\d+)?)/; // split numbers // class variable or in split argument ?
+		this.propSplit = /(-?\d+(?:.\d+)?(?:e-?\d+)?)/; // split numbers // TODO class variable or in split argument ?
 	}
 	
 	/**
@@ -79,7 +81,7 @@ class Effect {
 	* @param {Object} effect: params object
 	*/
 	static addEffect(effect) {
-		if(effect.o) this.removeEffect(effect.effid); // override
+		if(effect.pwnd) this.removeEffect(effect.effid); // override
 		this.effects.push(effect); // push to pool
 		if(!this.frameLoop) { // not running, lift off
 			this.frameLoop = window.requestAnimationFrame(stamp => { // dummy first raf to get DOMHighResTimeStamp
@@ -109,14 +111,12 @@ class Effect {
 	* @param {number} stamp: from requestAnimationFrame
 	*/
 	static animationFrame(stamp) {
-		if(!this.effects.length) return this.frameLoop = undefined; // pool is empty, stop frame loop
-		let step = 1 + Math.round((stamp - this.stamp) / 60); // d-d-drop the frames
+		if(!this.effects.length) return this.frameLoop = 0; // pool is empty, stop frame loop
+		let step = Math.round(60 / 1000 * (stamp - this.stamp)); // d-d-drop the frames
 		//if(step > 1) console.log("DROP", step - 1);
 		this.stamp = stamp; // keep frame timestamp
-		/*this.frameLoop = window.requestAnimationFrame(stamp => {
-			this.animationFrame(stamp); // request next frame // old ipad fix
-		});*/
-		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this));
+		//this.frameLoop = window.requestAnimationFrame(stamp => { this.animationFrame(stamp); }); // wtf old ipad minify fix ??
+		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this)); // request next frame
 		this.effects = this.effects.reduce((res, eff) => this.effectTick(res, eff, step), []); // loop effects
 	}
 	
@@ -130,25 +130,25 @@ class Effect {
 	* @param {number} step: frame step
 	*/
 	static effectTick(res, eff, step) {
-		if(--eff.d > 0) res.push(eff); // delayed, wait
+		if(--eff.later > 0) res.push(eff); // delayed, wait
 		else {
-			if(eff.d === 0) Effect.parseProps(eff); // finished delay, get target CSS props before effect
-			eff.c = Math.min(eff.t, eff.c + step); // drop frame can exceed total frames for very short effects
-			for(let propName in eff.s) { // loop CSS props
-				let prop = eff.s[propName], // tmp
+			if(eff.later === 0) Effect.parseProps(eff); // finished delay, get target CSS props before effect
+			eff.elapsed = Math.min(eff.sthap, eff.elapsed + step); // drop frame can exceed total frames for very short effects
+			for(let propName in eff.newlook) { // loop CSS props
+				let prop = eff.newlook[propName], // tmp
 				update = prop.fromValues.slice(0); // clone start values
 				for(let i = 0; i < prop.indexes.length; i++) { // loop numeric values
 					let index = prop.indexes[i]; // tmp
-					update[index] = Effect[eff.e](eff.c, prop.fromValues[index], prop.gaps[i], eff.t).toFixed(eff.f); // current frame value, apply easing, round 2 digits
+					update[index] = Effect[eff.twist](eff.elapsed, prop.fromValues[index], prop.gaps[i], eff.sthap).toFixed(eff.sharp); // current frame value, apply easing, round digits
 				}
 				//console.log(propName + " " + update.join(""));
-				eff.el.style[propName] = update.join(""); // apply new CSS value
+				eff.subject.style[propName] = update.join(""); // apply new CSS value
 			}
-			if(eff.c < eff.t) res.push(eff); // wait next frame
-			else { // done, resolve and don't push
-				eff.d = eff.od;
-				eff.r();
-				eff.k();
+			if(eff.elapsed < eff.sthap) res.push(eff); // wait next frame
+			else { // done, resolve + callback and don't push
+				eff.later = eff.when; // reset delay in case effect is played again
+				eff.kept(); // resolve promise
+				eff.dring(); // callback
 			}
 		}
 		return res;
@@ -220,15 +220,15 @@ class Effect {
 	* @param {Object} eff: the effect
 	*/
 	static parseProps(eff) {
-		for(let prop in eff.p) { // loop effect props
-			let fromValues = this.parseProp(eff.el.style[prop] || window.getComputedStyle(eff.el).getPropertyValue(prop)), // parse start values
-			toValues = this.parseProp(eff.p[prop]), // parse end values
+		for(let prop in eff.props) { // loop effect props
+			let fromValues = this.parseProp(eff.subject.style[prop] || window.getComputedStyle(eff.subject).getPropertyValue(prop)), // parse start values
+			toValues = this.parseProp(eff.props[prop]), // parse end values
 			gaps = [], indexes = []; // init gaps and numeric values indexes
 			for(let i = 0; i < fromValues.length; i++) if(!isNaN(fromValues[i])) indexes.push(i); // find numeric values indexes
 			for(let i = toValues.length; i < fromValues.length; i++) toValues.push(fromValues[i]); // copy unit from start values if ommited // TODO better
 			for(let i = 0; i < indexes.length; i++) gaps.push(toValues[indexes[i]] - fromValues[indexes[i]]); // calc gaps between start and end values
-			eff.s[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
-			//console.log(prop + "  FROM  " + fromValues.join("") + "  TO  " + toValues.join(""));
+			eff.newlook[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
+			//console.log(prop + " FROM " + fromValues.join("") + " TO " + toValues.join(""));
 		}
 	}
 	
@@ -236,10 +236,10 @@ class Effect {
 	* @static
 	* @nocollapse
 	* @method parseProp: parse number values from string
-	* @param {string} value: 
+	* @param {string} value: CSS value
 	*/
 	static parseProp(value) {
-		//console.log(value);
+		//console.log("parse", value);
 		return String(value).split(this.propSplit).filter(Boolean).map(value => isNaN(value) ? value : +value); // split strings and numbers, remove empty strings, cast numbers
 	}
 	

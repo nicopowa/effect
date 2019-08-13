@@ -13,9 +13,10 @@ https://nicopr.fr/effect
  - 2.3k GZIP (ノಠ益ಠ)ノ彡┻━━┻
  - no CSS
  - easing, delay, override
- - async/await animations > easy timeline
+ - async/await animations for easy timeline
 
 # Why ?
+
 Playing with vanilla JS ice cream since it's hot in Paris these days.
 
 A web page with a menu, a picture and some text doesn't require 2Mb JS code.
@@ -38,13 +39,13 @@ https://nicopowa.github.io/effect/
 
     // simple effect
     myElement.style.width = "50px"; // important ! set initial value
-    let myEffect = new Effect(myElement, {frames: 60, props: {width: 100}}); // or "100px"
+    let myEffect = new Effect(myElement, 60, {width: 100}); // or "100px"
     myEffect.play();
 
     // async effect
     myElement.style.left= "10px"; // important ! set initial value
-    let go = new Effect(myElement, {frames: 60, props: {left: 100}}); // or "100px"
-    let back = new Effect(myElement, {frames: 60, props: {left: 10}}); // or "10px"
+    let go = new Effect(myElement, 60, {left: 100}); // or "100px"
+    let back = new Effect(myElement, 60, {left: 10}); // or "10px"
     await go.play();
     await back.play();
 	

@@ -4,13 +4,13 @@ class Effect { // unify Effect & TweenMax calls
 		ease = ease || "no";
 		delay = delay * toSec || 0;
 		this.target = target;
-		this.frames = frames;
+		this.secs = frames * toSec;
 		this.callback = callback || function() {};
 		this.params = Object.assign(props, {delay: delay, ease: Effect.ease(ease)});
 	}
 	
 	play() {
-		return Effect.asyncTween(this.target, this.frames * toSec, this.params, this.callback);
+		return Effect.asyncTween(this.target, this.secs, this.params, this.callback);
 	}
 	
 	static ease(name) {

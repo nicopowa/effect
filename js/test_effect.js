@@ -204,7 +204,7 @@ async function notSimpleEffect() {
 	
 	await asyncForEach(squares, async (square, index) => {
 		let coords = pointAround(window.innerWidth / 2, window.innerHeight / 2, window.innerWidth / 2 - sqs, window.innerHeight / 2, 360 * index / squares.length * toRadians);
-		return new Effect(square, 2, {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2}, "quartInOut").play();
+		return new Effect(square, 1, {left: coords.x - sqs / 2, top: coords.y - sqs / 2, "border-radius": sqs / 2}, "quartInOut").play();
 	});
 	await plz(60 * 20);
 	let dur = 60;
@@ -212,7 +212,7 @@ async function notSimpleEffect() {
 	console.time("notsimple");
 	
 	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {left: index % nsqw * sqs, top: Math.floor(index / nsqw) * sqs, "border-radius": 0}, "quartInOut").play());
-	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {[filter]: "blur(10px)"}, "quartInOut").play());
+	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {[filter]: "blur(5px)"}, "quartInOut").play());
 	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {[filter]: "blur(0px)"}, "quartInOut").play());
 	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {left: randXCoord(), top: randYCoord(), "border-radius": sqs / 2}, "quartInOut").play());
 	await asyncForEachLast(squares, (square, index) => new Effect(square, dur, {left: (window.innerWidth - sqs) / 2, top: (window.innerHeight - sqs) / 2, "border-radius": 0, opacity: 0.05}, "quartInOut").play());

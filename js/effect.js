@@ -1,6 +1,6 @@
 /*
 * Effect
-* tiny animation engine
+* lightweight animation engine
 * Nico Pr 2019
 * https://nicopr.fr/effect
 */

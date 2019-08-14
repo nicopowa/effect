@@ -3,7 +3,7 @@
 
 # Effect
 
-Tiny animation engine
+lightweight animation engine
 
 https://nicopr.fr/effect
 

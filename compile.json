@@ -1,0 +1,41 @@
+{
+	"default": {
+		"output_file": "js/effect.min.js",
+		"files": [
+			"js/effect.js"
+		],
+		"options": {
+			
+		},
+		"externs": [
+		
+		]
+	},
+	
+	"compat": {
+		"output_file": "js/effect.compat.min.js",
+		"files": [
+			"js/effect.js",
+			"js/raf_polyfill.js"
+		],
+		"options": {
+			
+		},
+		"externs": [
+		
+		]
+	},
+	
+	"debug": {
+		"output_file": "js/effect.min.js",
+		"files": [
+			"js/effect.js"
+		],
+		"options": {
+			"define": "DEBUG=true"
+		},
+		"externs": [
+		
+		]
+	}
+}

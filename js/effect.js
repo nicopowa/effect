@@ -1,17 +1,30 @@
 /*
 * Effect
 * lightweight animation engine
-* Nico Pr 2019
 * https://nicopr.fr/effect
 */
 
 /**
+* @define {boolean} DEBUG: verbose
+*/
+var DEBUG = false;
+
+/**
 * @export
+* @class
 */
 class Effect {
 	
+	//closure compiler esnext class private fields error
+	//static #_id = 0; // id counter
+	//static #frameLoop = 0; // raf loop
+	//static #effects = []; // effects pool
+	//static #propSplit = /(-?\d+(?:.\d+)?(?:e-?\d+)?)/; // split numbers // TODO class variable or in split argument ?
+
 	/**
-	* new Effect(myElement, 60, {backgroundColor: "rgba(0, 0, 255)"}, "quartOut");
+	* let myElement = document.createElement("div");
+	* Object.assign(myElement.style, {"width": "100px", "height": "100px", "backgroundColor": "rgb(0, 0, 0)"});
+	* new Effect(myElement, 60, {backgroundColor: "rgb(0, 0, 255)"}, "quartOut");
 	*
 	* @param {Element} target: who wants to move ?
 	* @param {number} frames: number of frames
@@ -24,7 +37,7 @@ class Effect {
 	constructor(target, frames, props, ease, delay, override, callback) {
 		delay = delay++ || 1; // parse delay
 		this.params = { // all params
-			effid: +target.getAttribute("data-eff") || ++Effect._id, // element effect reference
+			effid: +target.getAttribute("data-ef") || ++Effect._id, // element effect reference
 			subject: target, // animated element
 			later: delay, // delay frames
 			when: delay, // keep original delay
@@ -37,7 +50,8 @@ class Effect {
 			dring: callback || function() {}, // callback
 			sharp: 2 // numeric values precision // TODO rgb color codes easing precision bug on older devices
 		};
-		target.setAttribute("data-eff", this.params.effid); // assign id to HTML element
+		target.setAttribute("data-ef", this.params.effid); // assign id to HTML element
+		if(DEBUG) console.log("effect", this.params.effid, this.params.subject.nodeName);
 	}
 	
 	/**
@@ -55,9 +69,10 @@ class Effect {
 	/**
 	* @export
 	* @method stop: stop effect
+	* @return {number}
 	*/
 	stop() {
-		Effect.removeEffect(this.params.effid);
+		return Effect.removeEffect(this.params.effid);
 	}
 	
 	/**
@@ -65,6 +80,7 @@ class Effect {
 	* @private
 	* @nocollapse
 	* @method init: set up things
+	* @return void
 	*/
 	static init() {
 		this._id = 0; // id counter
@@ -97,10 +113,12 @@ class Effect {
 	* @nocollapse
 	* @method removeEffect: remove from pool
 	* @param {number} id: effect id
+	* @return {number}
 	*/
 	static removeEffect(id) {
 		// TODO clean effect disposal and null ?
 		this.effects = this.effects.filter(eff => eff.effid != id); // savage <3
+		return id;
 	}
 	
 	/**
@@ -113,7 +131,7 @@ class Effect {
 	static animationFrame(stamp) {
 		if(!this.effects.length) return this.frameLoop = 0; // pool is empty, stop frame loop
 		let step = Math.round(60 / 1000 * (stamp - this.stamp)); // d-d-drop the frames
-		//if(step > 1) console.log("DROP", step - 1);
+		if(DEBUG) if(step > 1) console.log("DROP", step - 1);
 		this.stamp = stamp; // keep frame timestamp
 		//this.frameLoop = window.requestAnimationFrame(stamp => { this.animationFrame(stamp); }); // wtf old ipad minify fix ??
 		this.frameLoop = window.requestAnimationFrame(this.animationFrame.bind(this)); // request next frame
@@ -141,14 +159,15 @@ class Effect {
 					let index = prop.indexes[i]; // tmp
 					update[index] = Effect[eff.twist](eff.elapsed, prop.fromValues[index], prop.gaps[i], eff.sthap).toFixed(eff.sharp); // current frame value, apply easing, round digits
 				}
-				//console.log(propName + " " + update.join(""));
+				//if(DEBUG) console.log(propName + " " + update.join("")); // careful with this one
 				eff.subject.style[propName] = update.join(""); // apply new CSS value
 			}
 			if(eff.elapsed < eff.sthap) res.push(eff); // wait next frame
 			else { // done, resolve + callback and don't push
+				if(DEBUG) console.log(eff.effid + " end");
 				eff.later = eff.when; // reset delay in case effect is played again
 				eff.kept(); // resolve promise
-				eff.dring(); // callback
+				eff.dring(eff.subject); // callback
 			}
 		}
 		return res;
@@ -228,7 +247,7 @@ class Effect {
 			for(let i = toValues.length; i < fromValues.length; i++) toValues.push(fromValues[i]); // copy unit from start values if ommited // TODO better
 			for(let i = 0; i < indexes.length; i++) gaps.push(toValues[indexes[i]] - fromValues[indexes[i]]); // calc gaps between start and end values
 			eff.newlook[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
-			//console.log(prop + " FROM " + fromValues.join("") + " TO " + toValues.join(""));
+			if(DEBUG) console.log(prop + " FROM " + fromValues.join("") + " TO " + toValues.join(""));
 		}
 	}
 	

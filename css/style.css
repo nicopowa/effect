@@ -23,6 +23,8 @@ body {
 	
 	font-family: helvetica;
 	font-size: 10pt;
+	
+	overflow: hidden;
 }
 
 .square {

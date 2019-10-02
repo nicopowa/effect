@@ -69,22 +69,34 @@ async function main() {
 		else return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
 	}
 	
-	await plz(250);
 	
-	//overrideTest(); await plz(500);
-	await verySimpleEffect();
-	await simpleEffect();
-	await notSimpleEffect();
 	
-}
-
-async function verySimpleEffect() {
-	
-	let sq1 = square(10, 10, 100, 100, 0);
+	let sq1 = square(10, 10, 100, 100, "click me");
 	sq1.style.backgroundColor = "rgb(255, 0, 0)";
 	sq1.style.opacity = 1;
 	sq1.style[shadow] = "0px 0px 0px 0px #656565";
 	document.body.appendChild(sq1);
+	
+	sq1.addEventListener("click", start);
+}
+
+async function start() {
+	
+	let sq1 = event.target;
+	
+	sq1.removeEventListener("click", start);
+	sq1.innerHTML = "0";
+	
+	await plz(250);
+	
+	//overrideTest(); await plz(500);
+	
+	await verySimpleEffect(sq1);
+	await simpleEffect();
+	await notSimpleEffect();
+}
+
+async function verySimpleEffect(sq1) {
 	
 	let dur = 60;
 	let maxLeft = Math.min(window.innerWidth - 100 - 10, 500);
@@ -126,7 +138,7 @@ async function simpleEffect() {
 	sq3.style[transform] = "rotate(0deg)";
 	sq3.style[filter] = "blur(0px)";
 	
-	let sq4 = square(10, 340, 100, 100, 2);
+	let sq4 = square(10, 340, 100, 100, 3);
 	sq4.style.backgroundColor = "rgb(0, 0, 0)";
 	sq4.style.opacity = 1;
 	document.body.appendChild(sq4);

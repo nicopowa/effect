@@ -11,7 +11,7 @@ var DEBUG = false;
 
 /**
 * @export
-* @class
+* @class Effect: animate HTML elements CSS props
 */
 class Effect {
 	

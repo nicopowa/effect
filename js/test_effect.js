@@ -1,6 +1,6 @@
 window.onload = main;
 
-function pointAround(centerx, centery, x, y, angle) {
+const pointAround = (centerx, centery, x, y, angle) => {
 	let x1 = x - centerx;
 	let y1 = y - centery;
 	let x2 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
@@ -61,15 +61,22 @@ function square(left, top, width, height, index) {
 async function main() {
 	
 	console.log("main");
-	
+
+	/*let ghost = document.createElement("div");
+	document.body.appendChild(ghost);
+	ghost.style.width = ghost.style.height = "1px";
+	ghost.style[transform] = "rotate(1px)";
+	ghost.style[filter] = "blur(1px)";
+	ghost.style[shadow] = "1px 1px 1px 1px #FFFFFF";
+	document.body.removeChild(ghost);
+	ghost = null;*/
+
 	Effect["bounceOut"] = function(t, b, c, d) { // some bounce
 		if((t /= d) < (1 / 2.75)) return c * (7.5625 * t * t) + b;
 		else if(t < (2 / 2.75)) return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
 		else if(t < (2.5 / 2.75)) return c * (7.5625 * (t -= (2.25 / 2.75))*t + .9375) + b;
 		else return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
 	}
-	
-	
 	
 	let sq1 = square(10, 10, 100, 100, "click me");
 	sq1.style.backgroundColor = "rgb(255, 0, 0)";

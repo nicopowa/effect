@@ -1,5 +1,7 @@
 window.onload = main;
 
+var DEBUG = false;
+
 const pointAround = (centerx, centery, x, y, angle) => {
 	let x1 = x - centerx;
 	let y1 = y - centery;

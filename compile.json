@@ -19,7 +19,7 @@
 			"js/raf_polyfill.js"
 		],
 		"options": {
-			
+			"define": "DEBUG=false"
 		},
 		"externs": [
 		

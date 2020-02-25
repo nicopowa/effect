@@ -4,9 +4,9 @@
 		"files": [
 			"js/effect.js"
 		],
-		"options": {
-			
-		},
+		"options": [
+			{"define": "DEBUG=false"}
+		],
 		"externs": [
 		
 		]
@@ -31,9 +31,9 @@
 		"files": [
 			"js/effect.js"
 		],
-		"options": {
-			"define": "DEBUG=true"
-		},
+		"options": [
+			{"define": "DEBUG=false"}
+		],
 		"externs": [
 		
 		]

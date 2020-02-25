@@ -1,16 +1,12 @@
-/*
-* Effect
-* lightweight animation engine
-* https://nicopr.fr/effect
-*/
-
 /**
-* @export
-* @class Effect : animate HTML elements CSS props
-*/
+ * @export
+ * @class Effect : lightweight animation engine / animate HTML elements CSS props
+ * @author Nico Pr 2020
+ * @url https://nicopr.fr/effect
+ */
 class Effect {
 	
-	// closure compiler esnext class private fields error
+	//closure compiler esnext class private fields error
 	//static #_id = 0; // id counter
 	//static #frameLoop = 0; // raf loop
 	//static #effects = []; // effects pool
@@ -20,14 +16,16 @@ class Effect {
 	 * let myElement = document.createElement("div");
 	 * Object.assign(myElement.style, {"width": "100px", "height": "100px", "backgroundColor": "rgb(0, 0, 0)"});
 	 * new Effect(myElement, 60, {backgroundColor: "rgb(0, 0, 255)"}, "quartOut");
-	 *
-	 * @param {Element} target: who wants to move ?
-	 * @param {number} frames: number of frames
-	 * @param {Object} props: CSS props
-	 * @param {string=} ease: easing function name
-	 * @param {number=} delay: frames before start
-	 * @param {boolean=} override: stop current effect
-	 * @param {Function=} callback: effect end function
+	 * 
+	 * @construct
+	 * @param {Element} target : who wants to move ?
+	 * @param {number} frames : number of frames
+	 * @param {Object} props : CSS props
+	 * @param {string=} ease : easing function name
+	 * @param {number=} delay : frames before start
+	 * @param {boolean=} override : stop current effect
+	 * @param {Function=} callback : effect end function
+	 * @return {Effect} Effect instance
 	 */
 	constructor(target, frames, props, ease, delay, override, callback) {
 		delay = delay++ || 1; // parse delay
@@ -43,7 +41,7 @@ class Effect {
 			twist: ease || "no", // easing function
 			pwnd: override || false, // override
 			dring: callback || function() {}, // callback
-			sharp: 2 // numeric values precision // TODO rgb color codes easing float unhandled on older devices
+			sharp: 2 // numeric values precision, TODO rgb color codes easing float unhandled on older devices
 		};
 		target.setAttribute("data-ef", this.params.effid); // assign id to HTML element
 		if(DEBUG) console.log("effect", this.params.effid, this.params.subject.nodeName, this.params.sthap, "frames", "delay", this.params.later);
@@ -51,7 +49,7 @@ class Effect {
 	
 	/**
 	 * @export
-	 * @method play: start effect
+	 * @method play : start effect
 	 * @return {Promise}
 	 */
 	play() {
@@ -63,7 +61,7 @@ class Effect {
 	
 	/**
 	 * @export
-	 * @method stop: stop effect
+	 * @method stop : stop effect
 	 * @return {number}
 	 */
 	stop() {
@@ -74,7 +72,7 @@ class Effect {
 	 * @static
 	 * @private
 	 * @nocollapse
-	 * @method init: set up things
+	 * @method init : set up things
 	 * @return void
 	 */
 	static init() {
@@ -89,8 +87,8 @@ class Effect {
 	 * @static
 	 * @private
 	 * @nocollapse
-	 * @method addEffect: add to pool
-	 * @param {Object} effect: params object
+	 * @method addEffect : add to pool
+	 * @param {Object} effect : params object
 	 */
 	static addEffect(effect) {
 		if(effect.pwnd) this.removeEffect(effect.effid); // override
@@ -108,8 +106,8 @@ class Effect {
 	 * @static
 	 * @private
 	 * @nocollapse
-	 * @method removeEffect: remove from pool
-	 * @param {number} id: effect id
+	 * @method removeEffect : remove from pool
+	 * @param {number} id : effect id
 	 * @return {number}
 	 */
 	static removeEffect(id) {
@@ -122,8 +120,8 @@ class Effect {
 	 * @static
 	 * @nocollapse
 	 * @private
-	 * @method animationFrame: calc stamp and loop effects
-	 * @param {number} stamp: from requestAnimationFrame
+	 * @method animationFrame : calc stamp and loop effects
+	 * @param {number} stamp : from requestAnimationFrame
 	 */
 	static animationFrame(stamp) {
 		if(!this.effects.length) {
@@ -149,10 +147,10 @@ class Effect {
 	 * @static
 	 * @nocollapse
 	 * @private
-	 * @method effectTick: called from frame loop
-	 * @param {Array} res: reduce accumulator
-	 * @param {Object} eff: current effect
-	 * @param {number} step: frame step
+	 * @method effectTick : called from frame loop
+	 * @param {Array} res : reduce accumulator
+	 * @param {Object} eff : current effect
+	 * @param {number} step : frame step
 	 */
 	static effectTick(res, eff, step) {
 		if(--eff.later > 0) res.push(eff); // delayed, wait
@@ -181,11 +179,12 @@ class Effect {
 	 * @export
 	 * @static
 	 * @nocollapse
-	 * @method no: linear ease
-	 * @param {number} t: current time or position / can be frames, steps, seconds, ms, whatever
-	 * @param {number} b: beginning value
-	 * @param {number} c: change between the beginning & destination value
-	 * @param {number} d: total time of the tween
+	 * @method no : linear ease
+	 * @param {number} t : current time or position / can be frames, steps, seconds, ms, whatever
+	 * @param {number} b : beginning value
+	 * @param {number} c : change between the beginning & destination value
+	 * @param {number} d : total time of the tween
+	 * @return {number}
 	 */
 	static no(t, b, c, d) {
 		return c * t / d + b;
@@ -195,11 +194,12 @@ class Effect {
 	 * @export
 	 * @static
 	 * @nocollapse
-	 * @method quartOut: 
-	 * @param {number} t: 
-	 * @param {number} b: 
-	 * @param {number} c: 
-	 * @param {number} d: 
+	 * @method quartOut : 
+	 * @param {number} t : 
+	 * @param {number} b : 
+	 * @param {number} c : 
+	 * @param {number} d : 
+	 * @return {number}
 	 */
 	static quartOut(t, b, c, d) {
 		return -c * ((t = t / d - 1) * t * t * t - 1) + b;
@@ -209,11 +209,12 @@ class Effect {
 	 * @export
 	 * @static
 	 * @nocollapse
-	 * @method quartIn: 
-	 * @param {number} t: 
-	 * @param {number} b: 
-	 * @param {number} c: 
-	 * @param {number} d: 
+	 * @method quartIn : 
+	 * @param {number} t : 
+	 * @param {number} b : 
+	 * @param {number} c : 
+	 * @param {number} d : 
+	 * @return {number}
 	 */
 	static quartIn(t, b, c, d) {
 		return c * (t /= d) * t * t * t + b;
@@ -223,11 +224,12 @@ class Effect {
 	 * @export
 	 * @static
 	 * @nocollapse
-	 * @method quartInOut: 
-	 * @param {number} t: 
-	 * @param {number} b: 
-	 * @param {number} c: 
-	 * @param {number} d: 
+	 * @method quartInOut : 
+	 * @param {number} t : 
+	 * @param {number} b : 
+	 * @param {number} c : 
+	 * @param {number} d : 
+	 * @return {number}
 	 */
 	static quartInOut(t, b, c, d) {
 		if((t /= d / 2) < 1) return c / 2 * t * t + b;
@@ -238,8 +240,8 @@ class Effect {
 	 * @static
 	 * @private
 	 * @nocollapse
-	 * @method parseProps: parse effect start & end CSS properties
-	 * @param {Object} eff: the effect
+	 * @method parseProps : parse effect start & end CSS properties
+	 * @param {Object} eff : the effect
 	 */
 	static parseProps(eff) {
 		for(let prop in eff.props) { // loop effect props
@@ -258,8 +260,8 @@ class Effect {
 	 * @static
 	 * @private
 	 * @nocollapse
-	 * @method parseProp: parse number values from string
-	 * @param {string} value: CSS value
+	 * @method parseProp : parse number values from string
+	 * @param {string} value : CSS value
 	 */
 	static parseProp(value) {
 		//console.log("parse", value);

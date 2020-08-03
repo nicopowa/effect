@@ -18,21 +18,21 @@
 			"js/effect.js",
 			"js/raf_polyfill.js"
 		],
-		"options": {
-			"define": "DEBUG=false"
-		},
+		"options": [
+			{"define": "DEBUG=false"}
+		],
 		"externs": [
 		
 		]
 	},
 	
 	"debug": {
-		"output_file": "js/effect.min.js",
+		"output_file": "js/effect.debug.min.js",
 		"files": [
 			"js/effect.js"
 		],
 		"options": [
-			{"define": "DEBUG=false"}
+			{"define": "DEBUG=true"}
 		],
 		"externs": [
 		

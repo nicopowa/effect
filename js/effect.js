@@ -15,13 +15,13 @@ class Effect {
 	/**
 	 * let myElement = document.createElement("div");
 	 * Object.assign(myElement.style, {"width": "100px", "height": "100px", "backgroundColor": "rgb(0, 0, 0)"});
-	 * new Effect(myElement, 60, {backgroundColor: "rgb(0, 0, 255)"}, "quartOut");
+	 * new Effect(myElement, 60, {backgroundColor: "rgb(0, 0, 255)"}, Effect.quartOut);
 	 * 
 	 * @construct
 	 * @param {Element} target : who wants to move ?
 	 * @param {number} frames : number of frames
 	 * @param {Object} props : CSS props
-	 * @param {string=} ease : easing function name
+	 * @param {Function=} ease : easing function name
 	 * @param {number=} delay : frames before start
 	 * @param {boolean=} override : stop current effect
 	 * @param {Function=} callback : effect end function
@@ -38,7 +38,7 @@ class Effect {
 			newlook: {}, // target CSS props
 			sthap: frames, // total frames
 			props: props, // keep original props
-			twist: ease || "no", // easing function
+			twist: ease || Effect.no, // easing function
 			pwnd: override || false, // override
 			dring: callback || function() {}, // callback
 			sharp: 2 // numeric values precision, TODO rgb color codes easing float unhandled on older devices
@@ -75,8 +75,9 @@ class Effect {
 	 * @method init : set up things
 	 * @return void
 	 */
-	static init() {
-		this._id = 0; // id counter
+	static initialize() {
+		Effect._id = 0; // id counter
+		this.stamp = 0;
 		this.frameLoop = 0; // raf loop
 		this.effects = []; // effects pool
 		this.done = [];
@@ -118,8 +119,8 @@ class Effect {
 	
 	/**
 	 * @static
-	 * @nocollapse
 	 * @private
+	 * @nocollapse
 	 * @method animationFrame : calc stamp and loop effects
 	 * @param {number} stamp : from requestAnimationFrame
 	 */
@@ -145,8 +146,8 @@ class Effect {
 	
 	/**
 	 * @static
-	 * @nocollapse
 	 * @private
+	 * @nocollapse
 	 * @method effectTick : called from frame loop
 	 * @param {Array} res : reduce accumulator
 	 * @param {Object} eff : current effect
@@ -155,14 +156,14 @@ class Effect {
 	static effectTick(res, eff, step) {
 		if(--eff.later > 0) res.push(eff); // delayed, wait
 		else {
-			if(eff.later === 0) Effect.parseProps(eff); // finished delay, get target CSS props before effect
+			if(eff.later === 0) this.parseProps(eff); // finished delay, get target CSS props before effect
 			eff.elapsed = Math.min(eff.sthap, eff.elapsed + step); // drop frame can exceed total frames for very short effects
 			for(let propName in eff.newlook) { // loop CSS props
 				let prop = eff.newlook[propName], // tmp
 				update = prop.fromValues.slice(0); // clone start values
 				for(let i = 0; i < prop.indexes.length; i++) { // loop numeric values
 					let index = prop.indexes[i]; // tmp
-					update[index] = Effect[eff.twist](eff.elapsed, prop.fromValues[index], prop.gaps[i], eff.sthap).toFixed(eff.sharp); // current frame value, apply easing, round digits
+					update[index] = eff.twist(eff.elapsed, prop.fromValues[index], prop.gaps[i], eff.sthap).toFixed(eff.sharp); // current frame value, apply easing, round digits
 				}
 				//if(DEBUG) console.log(propName + " " + update.join("")); // careful with this one
 				eff.subject.style[propName] = update.join(""); // apply new CSS value
@@ -178,7 +179,6 @@ class Effect {
 	 * https://github.com/danro/jquery-easing/blob/master/jquery.easing.js
 	 * @export
 	 * @static
-	 * @nocollapse
 	 * @method no : linear ease
 	 * @param {number} t : current time or position / can be frames, steps, seconds, ms, whatever
 	 * @param {number} b : beginning value
@@ -193,7 +193,6 @@ class Effect {
 	/**
 	 * @export
 	 * @static
-	 * @nocollapse
 	 * @method quartOut : 
 	 * @param {number} t : 
 	 * @param {number} b : 
@@ -208,7 +207,6 @@ class Effect {
 	/**
 	 * @export
 	 * @static
-	 * @nocollapse
 	 * @method quartIn : 
 	 * @param {number} t : 
 	 * @param {number} b : 
@@ -223,7 +221,6 @@ class Effect {
 	/**
 	 * @export
 	 * @static
-	 * @nocollapse
 	 * @method quartInOut : 
 	 * @param {number} t : 
 	 * @param {number} b : 
@@ -252,7 +249,7 @@ class Effect {
 			for(let i = toValues.length; i < fromValues.length; i++) toValues.push(fromValues[i]); // copy unit from start values if ommited // TODO better
 			for(let i = 0; i < indexes.length; i++) gaps.push(toValues[indexes[i]] - fromValues[indexes[i]]); // calc gaps between start and end values
 			eff.newlook[prop] = {indexes: indexes, gaps: gaps, fromValues: fromValues}; // all set
-			if(DEBUG) console.log(prop + " FROM " + fromValues.join("") + " TO " + toValues.join(""));
+			//if(DEBUG) console.log(prop + " FROM " + fromValues.join("") + " TO " + toValues.join(""));
 		}
 	}
 	
@@ -265,9 +262,9 @@ class Effect {
 	 */
 	static parseProp(value) {
 		//console.log("parse", value);
-		return String(value).split(this.propSplit).filter(Boolean).map(value => isNaN(value) ? value : +value); // split strings and numbers, remove empty strings, cast numbers
+		return String(value).split(this.propSplit).filter(Boolean).map(value => (isNaN(value) ? value : +value)); // split strings and numbers, remove empty strings, cast numbers
 	}
 	
 }
 
-Effect.init();
+Effect.initialize();

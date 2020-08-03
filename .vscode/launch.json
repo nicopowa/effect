@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "PROD",
             "runtimeExecutable": "E:\\DL\\chromium\\chrome.exe",
-            "url": "https://localhost/gits/effect/",
+            "url": "https://localhost/effect/",
             "webRoot": "${workspaceFolder}"
         },
         {
@@ -17,7 +17,7 @@
             "request": "launch",
             "name": "DEBUG",
             "runtimeExecutable": "E:\\DL\\chromium\\chrome.exe",
-            "url": "https://localhost/gits/effect/debug.html",
+            "url": "https://localhost/effect/debug.html",
             "webRoot": "${workspaceFolder}"
         }
     ]

@@ -1,6 +1,6 @@
 window.onload = main;
 
-var DEBUG = false;
+//var DEBUG = false;
 
 const pointAround = (centerx, centery, x, y, angle) => {
 	let x1 = x - centerx, 
@@ -13,17 +13,12 @@ const pointAround = (centerx, centery, x, y, angle) => {
 let sqs = Math.min(window.innerWidth, window.innerHeight) / 10; // square size
 
 const prefix = (() => { // get browser prefix // https://davidwalsh.name/vendor-prefix
-	let styles = window.getComputedStyle(document.documentElement, ""), 
-	pre = (Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/) || (styles["OLink"] === "" && ["", "o"]))[1];
+	let styles = (window.getComputedStyle(document.documentElement, "")), 
+	pre = (/** @type {!IArrayLike|Iterable|string} */(Array.prototype.slice.call(styles).join("").match(/-(moz|ms|webkit)-/)) || (styles["OLink"] === "" && ["", "o"]))[1];
 	return pre == "moz" ? "" : "-" + pre + "-";
 })();
 
 console.log("PREFIX", prefix);
-
-const getVendorPrefix = () => {
-	let regex = /^-(moz|ms|webkit)-/;
-	return Promise.resolve(Array.from(window.getComputedStyle(document.documentElement, "")).find(prop => regex.test(prop))).then(prop => prop.match(regex)[0]).catch(err => "");
-};
 
 const toSec = 1 / 60;
 const toMs = 1000 / 60;
@@ -66,19 +61,6 @@ function square(left, top, width, height, index) {
 }
 
 async function main() {
-	
-	console.log("main");
-
-	console.log("PREFIX", await getVendorPrefix());
-
-	/*let ghost = document.createElement("div");
-	document.body.appendChild(ghost);
-	ghost.style.width = ghost.style.height = "1px";
-	ghost.style[transform] = "rotate(1px)";
-	ghost.style[filter] = "blur(1px)";
-	ghost.style[shadow] = "1px 1px 1px 1px #FFFFFF";
-	document.body.removeChild(ghost);
-	ghost = null;*/
 
 	Effect["bounceOut"] = function(t, b, c, d) { // some bounce
 		if((t /= d) < (1 / 2.75)) return c * (7.5625 * t * t) + b;
@@ -96,7 +78,7 @@ async function main() {
 	sq1.addEventListener("click", start);
 }
 
-async function start() {
+async function start(event) {
 	
 	let sq1 = event.target;
 	
@@ -124,7 +106,6 @@ async function verySimpleEffect(sq1) {
 	await new Effect(sq1, dur, {"top": maxTop}, Effect.quartInOut).play();
 	await new Effect(sq1, dur, {"left": 10}, Effect.quartInOut).play();
 	await new Effect(sq1, dur, {"top": 10}, Effect.quartInOut).play();
-	
 	
 	console.timeEnd("verysimple");
 	
@@ -197,8 +178,8 @@ async function simpleEffect() {
 	
 	console.timeEnd("simple");
 	
-	new Effect(sq4, dur * 1.5, {"left": Math.min(700, document.body.clientWidth - 100 - 10), "backgroundColor": "rgb(0, 255, 0)"}, "no").play();
-	await new Effect(sq4, dur * 1.5, {"top": document.body.clientHeight - 100}, "bounceOut").play();
+	new Effect(sq4, dur * 1.5, {"left": Math.min(700, document.body.clientWidth - 100 - 10), "backgroundColor": "rgb(0, 255, 0)"}, Effect.no).play();
+	await new Effect(sq4, dur * 1.5, {"top": document.body.clientHeight - 100}, Effect["bounceOut"]).play();
 	
 	await plz(dur * toMs);
 	
@@ -258,12 +239,12 @@ async function overrideTest() {
 	sq1.style.backgroundColor = "#FF0000";
 	document.body.appendChild(sq1);
 	
-	let eff = new Effect(sq1, {frames: 180, props: {left: "500px"}, ease: Effect.quartOut});
+	let eff = new Effect(sq1, 180, {left: "500px"}, Effect.quartOut);
 	eff.play();
 	console.log("wait");
 	await plz(1000);
 	console.log("override");
-	await new Effect(sq1, {frames: 90, props: {left: "10px"}, ease: Effect.quartOut, override: true}).play();
+	await new Effect(sq1, 90, {left: "10px"}, Effect.quartOut, 0, true).play();
 	/*console.log("stop");
 	eff.stop();*/
 	console.log("done");

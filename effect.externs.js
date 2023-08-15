@@ -1,9 +1,10 @@
 /**
  * @externs
+ * files : js/effect.js
  */
 
 /**
- * @constructor constructor
+ * @constructor 
  * @param {Element} target
  * @param {number} frames
  * @param {Object} props

@@ -34,4 +34,5 @@ class Effect { // unify Effect & TweenMax calls
 	/*static asyncTween(target, duration, options) {
 		return new Promise(resolve => TweenMax.to(target, duration, Object.assign(options, {"onComplete": resolve}))); // savage TweenMax onComplete promise
 	}*/
+	
 }

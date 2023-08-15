@@ -23,7 +23,9 @@ A web page with a menu, a picture and some text doesn't require 2Mb JS code.
 
 # Demo
 
-https://nicopowa.github.io/effect/
+https://nicopowa.github.io/effect/index.html
+
+same code with gsap wrapper : https://nicopowa.github.io/effect/gsap.html
 
 # How it works
 - play all effects from a single frame loop

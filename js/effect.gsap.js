@@ -1,38 +1,65 @@
+window.isGSAP = true;
+
 class Effect { // unify Effect & TweenMax calls
 	
+	//target, frames, props, ease, delay, override, callback
+
 	constructor(target, frames, props, ease, delay, override, callback) {
-		ease = ease || "no";
-		delay = delay * toSec || 0;
+		
 		this.target = target;
-		this.secs = frames * toSec;
 		this.callback = callback || function() {};
-		this.params = Object.assign(props, {delay: delay, ease: Effect.ease(ease)});
+		this.params = Object.assign(props, {duration: frames * toSec, delay: (delay || 0) * toSec, ease: ease()});
+
 	}
 	
 	play() {
-		return Effect.asyncTween(this.target, this.secs, this.params, this.callback);
+
+		return Effect.asyncTween(this.target, this.params, this.callback);
+
+	}
+
+	static no() {
+
+		return Linear.easeNone;
+		
 	}
 	
-	static ease(name) {
-		let eases = {
-			"no": Linear.easeNone,
-			"quartIn": Quart.easeIn,
-			"quartOut": Quart.easeOut,
-			"quartInOut": Quart.easeInOut,
-			"bounceOut": Bounce.easeOut
-		};
-		return eases[name];
+	static quartOut() {
+
+		return Quart.easeOut;
+
 	}
 	
-	static asyncTween(target, duration, options, callback) { // savage TweenMax onComplete promise
-		return new Promise(resolve => TweenMax.to(target, duration, Object.assign(options, {"onComplete": function() {
-			callback();
-			resolve();
-		}})));
+	static quartIn() {
+
+		return Quart.easeIn;
+
 	}
 	
-	/*static asyncTween(target, duration, options) {
-		return new Promise(resolve => TweenMax.to(target, duration, Object.assign(options, {"onComplete": resolve}))); // savage TweenMax onComplete promise
-	}*/
+	static quartInOut() {
+
+		return Quart.easeInOut;
+
+	}
+
+	static bounceOut() {
+
+		return Bounce.easeOut;
+
+	}
+	
+	static asyncTween(target, options, callback) { 
+
+		return gsap
+		.to(
+			target, 
+			options
+		)
+		.then(
+			() => 
+				callback()
+		);
+		
+	}
 	
 }

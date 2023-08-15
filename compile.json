@@ -43,7 +43,6 @@
 	"package": {
 		"output_file": "js/main.min.js",
 		"files": [
-			"js/effect.js", 
 			"js/main.js"
 		],
 		"output_style": "css/main.min.css",
@@ -57,7 +56,7 @@
 			
 		],
 		"externs": [
-
+			"effect"
 		],
 		"comment": "© ILUSIO %year https://blog.ilusio.dev"
 	}
